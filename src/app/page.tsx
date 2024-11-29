@@ -40,6 +40,9 @@ import profilePic from "../../public/profile.jpg";
 import { DiGithubBadge } from "react-icons/di";
 import { FaLinkedinIn, FaGithub } from "react-icons/fa6";
 import { Separator } from "@/components/ui/separator"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
+import { ProjectCarousel } from "@/components/project_carousel"
+import { SkillGrid } from "@/components/skill_grid"
 
 export default function Home() {
   const { theme, setTheme } = useTheme();
@@ -61,7 +64,8 @@ export default function Home() {
       {/* Starfield background */}
       <div className="absolute inset-0 -z-10">
         <Starfield backgroundColor={bgColor} starCount={1000} speedFactor={0.05} starColor={starColor} />
-      </div><NavigationMenu>
+      </div>
+      <NavigationMenu>
         <NavigationMenuList>
           <Link href="">
             <NavigationMenuItem className={navigationMenuTriggerStyle()}>Education</NavigationMenuItem>
@@ -126,9 +130,21 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
         </Card>
-        <Card className="md:col-span-3 col-span-4">
+        <Card className="col-span-4 md:col-span-1">
           <CardHeader>
-            <CardTitle className="text-lg">Education</CardTitle>
+            <CardTitle className="text-lg">Contacts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>Phone: (+63) 928 023 0975</CardDescription>
+            <CardDescription>Email: leviramos59@gmail.com</CardDescription>
+          </CardContent>
+          <CardFooter>
+            <Button>Email Me</Button>
+          </CardFooter>
+        </Card>
+        <Card className="md:col-span-3 col-span-4" >
+          <CardHeader>
+            <CardTitle className="text-lg text-center">Education</CardTitle>
             <div className="flex flex-col md:flex-row justify-around">
               <div className="flex flex-col items-center">
                 <p className="font-semibold">2020 - 2024</p>
@@ -150,53 +166,70 @@ export default function Home() {
             </div>
           </CardHeader>
         </Card>
-        <Card className="col-span-4 md:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Contacts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>Phone: 0928 023 0975</CardDescription>
-            <CardDescription>Email: leviramos59@gmail.com</CardDescription>
-          </CardContent>
-          <CardFooter>
-            <Button>Email Me</Button>
-          </CardFooter>
-        </Card>
-        <Card className="col-span-4 w-full flex flex-col items-center justify-center">
+        <Card className="col-span-4 w-full flex flex-col items-center justify-center" hoverEffect={false}>
           <CardHeader>
             <CardTitle>Work Experience</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-4">
-              <div className="flex flex-row justify-around">
-                <div className="flex flex-col items-center">
-                  <p className="font-semibold">Full-Stack Developer</p>
-                  <p className="">July 2024 - Present</p>
-                  <p className="">Apollo Technologies, Inc.</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-4">
-                <div className="flex flex-col items-center">
-                  <p className="font-semibold">Full-Stack Developer</p>
-                  <p className="">July 2024 - Present</p>
-                  <p className="">Apollo Technologies, Inc.</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-4">
-                <div className="flex flex-col items-center">
-                  <p className="font-semibold">Full-Stack Developer</p>
-                  <p className="">July 2024 - Present</p>
-                  <p className="">Apollo Technologies, Inc.</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-4">
-                <div className="flex flex-col items-center">
-                  <p className="font-semibold">Full-Stack Developer</p>
-                  <p className="">July 2024 - Present</p>
-                  <p className="">Apollo Technologies, Inc.</p>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <div className="flex flex-row justify-around border rounded-lg p-6">
+                    <div className="flex flex-col items-center">
+                      <p className="font-semibold">Full-Stack Developer</p>
+                      <p className="font-thin">July 2024 - Present</p>
+                      <p className="font-thin">Apollo Technologies, Inc.</p>
+                      <p className="font-thin text-xs">Obrero, Davao City</p>
+                    </div>
+                  </div>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-96 text-justify text-xs font-extralight">
+                  During my time at the company, I gained a full-stack experience, with a primary focus on front-end development while also contributing to backend tasks. I successfully deployed a new UI reskin using Vue.js and the Quasar Framework. The majority of my efforts were dedicated to developing a mobile application with Flutter, utilizing BLoc for state management. I was also tasked with cooperating with another dev team improve the back-end of their service which utilizes the KillBill open source API
+                </HoverCardContent>
+              </HoverCard>
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <div className="flex flex-row justify-around border rounded-lg p-6">
+                    <div className="flex flex-col items-center">
+                      <p className="font-semibold">Full-Stack Developer Intern</p>
+                      <p className="font-thin">Nov 2023 - Feb 2024</p>
+                      <p className="font-thin">NHTS Department, DSWD</p>
+                      <p className="font-thin text-xs">Bago Oshiro, Davao City</p>
+                    </div>
+                  </div>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-96 text-justify text-xs font-extralight">
+                  In my internship in DSWD, i was tasked in developing a request document management system that would be used by the Region XI of DSWD which has a SMS/email notification feature and cloud storage. I had a full-stack experience in making this system including the engineering side of it. I was also tasked in complying to quality assurance demands for deployment
+                </HoverCardContent>
+              </HoverCard>
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <div className="flex flex-row justify-around border rounded-lg p-6">
+                    <div className="flex flex-col items-center">
+                      <p className="font-semibold">Back-End Developer Intern</p>
+                      <p className="font-thin">July 2023 - Oct 2023</p>
+                      <p className="font-thin">Next BPO Solutions, Inc.</p>
+                      <p className="font-thin text-xs">Sandawa, Ecoland, Davao City</p>
+                    </div>
+                  </div>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-96 text-justify text-xs font-extralight">
+                  This is my first industry experience so I had a lot of learning. I was tasked in developing a backend employee module for their system that would be used by the company for their internal use. Its mostly simple rest api functions but it was a good start for me to understand how things work in the industry.
+                </HoverCardContent>
+              </HoverCard>
             </div>
+          </CardContent>
+        </Card>
+        <Card className="col-span-4" hoverEffect={false}>
+          <CardHeader><CardTitle className="text-center">Projects</CardTitle></CardHeader>
+          <CardContent className="flex justify-center">
+            <ProjectCarousel />
+          </CardContent>
+        </Card>
+        <Card className="col-span-4" hoverEffect={false}>
+          <CardHeader><CardTitle className="text-center">Skills</CardTitle></CardHeader>
+          <CardContent>
+            <SkillGrid />
           </CardContent>
         </Card>
       </div>
