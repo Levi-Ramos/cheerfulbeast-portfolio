@@ -117,16 +117,14 @@ export default function Home() {
           </CardFooter>
         </Card>
         <Card className="md:col-span-1 col-span-4 overflow-hidden">
-          <CardContent className="bg-profile-image bg-cover md:h-36 h-96">
-          </CardContent>
-          <CardFooter className="flex flex-col justify-start items-start mt-6">
+          <CardHeader>
             <CardTitle>
               Hi, I'm Levi
             </CardTitle>
             <CardDescription>
               A result-driven full-stack developer who has expertise in web and mobile development using Flutter, Springboot, Vue.js, and so much more...
             </CardDescription>
-          </CardFooter>
+          </CardHeader>
         </Card>
         <Card className="md:col-span-3 col-span-4">
           <CardHeader>
@@ -164,10 +162,42 @@ export default function Home() {
             <Button>Email Me</Button>
           </CardFooter>
         </Card>
-        <Card className="col-span-1 md:col-span-4">
+        <Card className="col-span-4 w-full flex flex-col items-center justify-center">
           <CardHeader>
-            <CardTitle>Experience</CardTitle>
+            <CardTitle>Work Experience</CardTitle>
           </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-4">
+              <div className="flex flex-row justify-around">
+                <div className="flex flex-col items-center">
+                  <p className="font-semibold">Full-Stack Developer</p>
+                  <p className="">July 2024 - Present</p>
+                  <p className="">Apollo Technologies, Inc.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-4">
+                <div className="flex flex-col items-center">
+                  <p className="font-semibold">Full-Stack Developer</p>
+                  <p className="">July 2024 - Present</p>
+                  <p className="">Apollo Technologies, Inc.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-4">
+                <div className="flex flex-col items-center">
+                  <p className="font-semibold">Full-Stack Developer</p>
+                  <p className="">July 2024 - Present</p>
+                  <p className="">Apollo Technologies, Inc.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-4">
+                <div className="flex flex-col items-center">
+                  <p className="font-semibold">Full-Stack Developer</p>
+                  <p className="">July 2024 - Present</p>
+                  <p className="">Apollo Technologies, Inc.</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </main >
