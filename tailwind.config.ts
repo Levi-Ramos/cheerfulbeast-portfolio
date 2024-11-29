@@ -7,7 +7,7 @@ const config = {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
-	],
+  ],
   prefix: "",
   theme: {
     container: {
@@ -18,7 +18,11 @@ const config = {
       },
     },
     extend: {
+      backgroundImage: {
+        'profile-image': "url('../../public/profile.jpg')",
+      },
       colors: {
+        dark: "#020818",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
