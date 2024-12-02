@@ -45,19 +45,30 @@ import { ProjectCarousel } from "@/components/project_carousel"
 import { SkillGrid } from "@/components/skill_grid"
 
 export default function Home() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [starColor, setStarColor] = useState<[number, number, number]>([255, 255, 255]);
   const [bgColor, setBgColor] = useState('#000000');
 
   useEffect(() => {
-    if (theme === 'dark') {
+    if (resolvedTheme === 'dark') {
       setStarColor([255, 255, 255]); // Stars are white
       setBgColor('#020818'); // Background is black
     } else {
       setStarColor([0, 0, 0]); // Stars are black
       setBgColor('#FFFFFF'); // Background is white
     }
-  }, [theme]);
+  }, [resolvedTheme]);
+
+  const scrollToSection = (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>, id: string) => {
+    event.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      window.scrollTo({
+        top: element.offsetTop - (window.innerHeight / 2 - element.clientHeight / 2),
+        behavior: 'smooth',
+      });
+    }
+  };
 
   return (
     <main className="relative">
@@ -67,16 +78,16 @@ export default function Home() {
       </div>
       <NavigationMenu>
         <NavigationMenuList>
-          <Link href="">
+          <Link href="#education" onClick={(e) => scrollToSection(e, 'education')}>
             <NavigationMenuItem className={navigationMenuTriggerStyle()}>Education</NavigationMenuItem>
           </Link>
-          <Link href="">
+          <Link href="#skills" onClick={(e) => scrollToSection(e, 'skills')}>
             <NavigationMenuItem className={navigationMenuTriggerStyle()}>Skills</NavigationMenuItem>
           </Link>
-          <Link href="">
+          <Link href="#experience" onClick={(e) => scrollToSection(e, 'experience')}>
             <NavigationMenuItem className={navigationMenuTriggerStyle()}>Experience</NavigationMenuItem>
           </Link>
-          <Link href="">
+          <Link href="#projects" onClick={(e) => scrollToSection(e, 'projects')}>
             <NavigationMenuItem className={navigationMenuTriggerStyle()}>Projects</NavigationMenuItem>
           </Link>
           <DropdownMenu>
@@ -113,11 +124,17 @@ export default function Home() {
             <CardDescription>I specialize in building scalable and efficient full-stack applications tailored to meet diverse client needs. With experience in developing mobile and web solutions, I've worked with frameworks like Laravel, Flutter, and Quasar, integrating robust APIs and utilizing state management techniques such as Bloc. My expertise spans building dynamic apps, implementing complex features like offline-first functionality, and integrating external services like Kill Bill for subscription management. Whether it's crafting intuitive UIs or ensuring backend reliability, I thrive on transforming innovative ideas into impactful, user-centered solutions. Let's collaborate to bring your vision to life!</CardDescription>
           </CardContent>
           <CardFooter className="space-x-6 bottom-0 position">
-            <Button>
-              <FaGithub />
-              GitHub
+            <Button asChild>
+              <Link href="https://github.com/Levi-Ramos">
+                <FaGithub />
+                GitHub
+              </Link>
             </Button>
-            <Button><FaLinkedinIn />LinkedIn</Button>
+            <Button asChild>
+              <Link href="https://www.linkedin.com/in/rowserowserowse/">
+                <FaLinkedinIn />LinkedIn
+              </Link>
+            </Button>
           </CardFooter>
         </Card>
         <Card className="md:col-span-1 col-span-4 overflow-hidden">
@@ -139,10 +156,14 @@ export default function Home() {
             <CardDescription>Email: leviramos59@gmail.com</CardDescription>
           </CardContent>
           <CardFooter>
-            <Button>Email Me</Button>
+            <Button asChild>
+              <Link rel="noreferrer" target="_blank" href="mailto:leviramos59@gmail.com">
+                Email Me
+              </Link>
+            </Button>
           </CardFooter>
         </Card>
-        <Card className="md:col-span-3 col-span-4" >
+        <Card id="education" className="md:col-span-3 col-span-4" >
           <CardHeader>
             <CardTitle className="text-lg text-center">Education</CardTitle>
             <div className="flex flex-col md:flex-row justify-around">
@@ -166,7 +187,7 @@ export default function Home() {
             </div>
           </CardHeader>
         </Card>
-        <Card className="col-span-4 w-full flex flex-col items-center justify-center" hoverEffect={false}>
+        <Card id="experience" className="col-span-4 w-full flex flex-col items-center justify-center" hoverEffect={false}>
           <CardHeader>
             <CardTitle>Work Experience</CardTitle>
           </CardHeader>
@@ -220,13 +241,13 @@ export default function Home() {
             </div>
           </CardContent>
         </Card>
-        <Card className="col-span-4" hoverEffect={false}>
+        <Card id="projects" className="col-span-4" hoverEffect={false}>
           <CardHeader><CardTitle className="text-center">Projects</CardTitle></CardHeader>
           <CardContent className="flex justify-center">
             <ProjectCarousel />
           </CardContent>
         </Card>
-        <Card className="col-span-4" hoverEffect={false}>
+        <Card id="skills" className="col-span-4" hoverEffect={false}>
           <CardHeader><CardTitle className="text-center">Skills</CardTitle></CardHeader>
           <CardContent>
             <SkillGrid />
