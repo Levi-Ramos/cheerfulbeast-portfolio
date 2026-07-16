@@ -27,7 +27,7 @@ export const projects: Project[] = [
     status: "IN DEV",
     badge: "dev",
     role: "Sole developer",
-    desc: "Greenfield field-sales mobile app for an enterprise ERP — building it from scratch in Flutter to replace a legacy desktop client. Confidential, in active development.",
+    desc: "Greenfield field-sales mobile app for an enterprise ERP — building it from scratch in Flutter to replace a legacy Delphi mobile app. Confidential, in active development.",
     tags: ["Flutter", "Dart", "Bloc", "GitHub Actions", "Fastlane"],
     glyph: "\u{1F512}",
     glyphColor: "#4ade80",
@@ -73,7 +73,7 @@ export const experience: Job[] = [
     role: "Software Engineer (Full-Stack)",
     company: "ActiveSystems Software Inc.",
     dates: "Jan 2025 — Present",
-    desc: "Sole developer on a greenfield Flutter field-sales app replacing a legacy system. Earlier, primary developer of a payroll/HRMS web client (Blazor/.NET), plus backend features and a Next.js migration. Set up mobile release pipelines and Docker deploys.",
+    desc: "Sole developer on a greenfield Flutter field-sales app replacing a legacy Delphi mobile app. Earlier, primary developer of a payroll/HRMS web client (Blazor/.NET), plus backend features and a Next.js migration. Set up mobile release pipelines and Docker deploys.",
   },
   {
     role: "Full-Stack Developer",
