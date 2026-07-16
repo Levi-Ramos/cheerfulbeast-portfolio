@@ -1,259 +1,205 @@
-/* eslint-disable react/no-unescaped-entities */
-"use client"
+"use client";
 
-import Image from "next/image";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { useCallback, useEffect, useState } from "react";
+import { FaGithub, FaLinkedinIn } from "react-icons/fa6";
+import { projects, experience, skills, type Project } from "@/lib/portfolio-data";
 
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuIndicator,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  NavigationMenuViewport,
-} from "@/components/ui/navigation-menu"
-import Link from "next/link";
-import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button";
-import { MoonIcon, SunIcon } from "@radix-ui/react-icons"
-import { useTheme } from "next-themes"
-import Starfield from "react-starfield";
-import React, { useEffect, useState } from 'react';
-import profilePic from "../../public/profile.jpg";
-import { DiGithubBadge } from "react-icons/di";
-import { FaLinkedinIn, FaGithub } from "react-icons/fa6";
-import { Separator } from "@/components/ui/separator"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
-import { ProjectCarousel } from "@/components/project_carousel"
-import { SkillGrid } from "@/components/skill_grid"
+const GITHUB = "https://github.com/Levi-Ramos";
+const LINKEDIN = "https://www.linkedin.com/in/rowserowserowse/";
+const EMAIL = "leviramos59@gmail.com";
+
+type LB = { images: string[]; i: number; title: string };
 
 export default function Home() {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [starColor, setStarColor] = useState<[number, number, number]>([255, 255, 255]);
-  const [bgColor, setBgColor] = useState('#000000');
+  const [lb, setLb] = useState<LB | null>(null);
 
-  useEffect(() => {
-    if (resolvedTheme === 'dark') {
-      setStarColor([255, 255, 255]); // Stars are white
-      setBgColor('#020818'); // Background is black
-    } else {
-      setStarColor([0, 0, 0]); // Stars are black
-      setBgColor('#FFFFFF'); // Background is white
-    }
-  }, [resolvedTheme]);
-
-  const scrollToSection = (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>, id: string) => {
-    event.preventDefault();
-    const element = document.getElementById(id);
-    if (element) {
-      window.scrollTo({
-        top: element.offsetTop - (window.innerHeight / 2 - element.clientHeight / 2),
-        behavior: 'smooth',
-      });
-    }
+  const openProject = (p: Project) => {
+    if (p.images && p.images.length) setLb({ images: p.images, i: 0, title: p.name });
   };
+  const close = useCallback(() => setLb(null), []);
+  const step = useCallback((d: number) => {
+    setLb((s) => (s ? { ...s, i: (s.i + d + s.images.length) % s.images.length } : s));
+  }, []);
+
+  // scroll-reveal
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("in");
+            io.unobserve(e.target);
+          }
+        }),
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+    );
+    document
+      .querySelectorAll<HTMLElement>(".glance,.projects,.tl,.skillgrid,.hero-cta,.contact .row")
+      .forEach((group) => {
+        group.querySelectorAll<HTMLElement>(".reveal").forEach((el, i) => {
+          el.style.transitionDelay = `${i * 80}ms`;
+        });
+      });
+    const els = document.querySelectorAll(".reveal");
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+  // lightbox keyboard nav
+  useEffect(() => {
+    if (!lb) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+      else if (e.key === "ArrowRight") step(1);
+      else if (e.key === "ArrowLeft") step(-1);
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [lb, close, step]);
 
   return (
-    <main className="relative">
-      {/* Starfield background */}
-      <div className="absolute inset-0 -z-10">
-        <Starfield backgroundColor={bgColor} starCount={1000} speedFactor={0.05} starColor={starColor} />
-      </div>
-      <NavigationMenu>
-        <NavigationMenuList>
-          <Link href="#education" onClick={(e) => scrollToSection(e, 'education')}>
-            <NavigationMenuItem className={navigationMenuTriggerStyle()}>Education</NavigationMenuItem>
-          </Link>
-          <Link href="#skills" onClick={(e) => scrollToSection(e, 'skills')}>
-            <NavigationMenuItem className={navigationMenuTriggerStyle()}>Skills</NavigationMenuItem>
-          </Link>
-          <Link href="#experience" onClick={(e) => scrollToSection(e, 'experience')}>
-            <NavigationMenuItem className={navigationMenuTriggerStyle()}>Experience</NavigationMenuItem>
-          </Link>
-          <Link href="#projects" onClick={(e) => scrollToSection(e, 'projects')}>
-            <NavigationMenuItem className={navigationMenuTriggerStyle()}>Projects</NavigationMenuItem>
-          </Link>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <SunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <MoonIcon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                <span className="sr-only">Toggle theme</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => {
-                setTheme("light");
-              }}>
-                Light
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {
-                setTheme("dark");
-              }}>
-                Dark
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("system")}>
-                System
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </NavigationMenuList>
-      </NavigationMenu>
-      <div className="grid grid-cols-4 flex-row md:gap-x-4 gap-y-4 mx-4 sm:mx-0">
-        <Card className="md:col-span-3 col-span-4 relative">
-          <CardHeader />
-          <CardContent className="overflow-hidden md:pr-40 pr-6">
-            <CardTitle className="text-3xl font-semibold">Let's work together ! ! !</CardTitle>
-            <CardDescription>I specialize in building scalable and efficient full-stack applications tailored to meet diverse client needs. With experience in developing mobile and web solutions, I've worked with frameworks like Laravel, Flutter, and Quasar, integrating robust APIs and utilizing state management techniques such as Bloc. My expertise spans building dynamic apps, implementing complex features like offline-first functionality, and integrating external services like Kill Bill for subscription management. Whether it's crafting intuitive UIs or ensuring backend reliability, I thrive on transforming innovative ideas into impactful, user-centered solutions. Let's collaborate to bring your vision to life!</CardDescription>
-          </CardContent>
-          <CardFooter className="space-x-6 bottom-0 position">
-            <Button asChild>
-              <Link href="https://github.com/Levi-Ramos">
-                <FaGithub />
-                GitHub
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href="https://www.linkedin.com/in/rowserowserowse/">
-                <FaLinkedinIn />LinkedIn
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-        <Card className="md:col-span-1 col-span-4 overflow-hidden">
-          <CardHeader>
-            <CardTitle>
-              Hi, I'm Levi
-            </CardTitle>
-            <CardDescription>
-              A result-driven full-stack developer who has expertise in web and mobile development using Flutter, Springboot, Vue.js, and so much more...
-            </CardDescription>
-          </CardHeader>
-        </Card>
-        <Card className="col-span-4 md:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Contacts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>Phone: (+63) 928 023 0975</CardDescription>
-            <CardDescription>Email: leviramos59@gmail.com</CardDescription>
-          </CardContent>
-          <CardFooter>
-            <Button asChild>
-              <Link rel="noreferrer" target="_blank" href="mailto:leviramos59@gmail.com">
-                Email Me
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-        <Card id="education" className="md:col-span-3 col-span-4" >
-          <CardHeader>
-            <CardTitle className="text-lg text-center">Education</CardTitle>
-            <div className="flex flex-col md:flex-row justify-around">
-              <div className="flex flex-col items-center">
-                <p className="font-semibold">2020 - 2024</p>
-                <CardDescription className="italic text-center">Bachelor of Science in Information Technology</CardDescription>
-                <CardDescription className="italic text-center">Major in Business Technology Management</CardDescription>
-                <Separator className="mt-2 hidden md:block" />
-                <CardDescription className="text-center"> University of Southeastern Philippines</CardDescription>
-                <CardDescription className="text-center">Obrero, Davao City</CardDescription>
+    <>
+      <nav className="pf-nav">
+        <div className="inner">
+          <div className="pf-brand">mark<span>.</span>ramos</div>
+          <div className="pf-navlinks">
+            <a href="#work">Work</a>
+            <a href="#experience">Experience</a>
+            <a href="#skills">Skills</a>
+            <a href="#contact">Contact</a>
+          </div>
+          <a className="btn" href="#contact">Get in touch</a>
+        </div>
+      </nav>
+
+      <header className="hero">
+        <div className="aurora a1" />
+        <div className="aurora a2" />
+        <div className="pf-wrap">
+          <div className="kicker reveal"><span className="pulse" />FULL-STACK ENGINEER · MOBILE + WEB · DAVAO CITY, PH</div>
+          <h1 className="reveal">Mark Levi Rowse<br /><span className="grad">M. Ramos</span></h1>
+          <p className="tagline reveal">
+            Full-stack software engineer who takes products from a rough spec all the way to release —
+            across Flutter, .NET, and modern web. Comfortable in unfamiliar stacks and the parts most
+            people skip.
+          </p>
+          <div className="hero-cta">
+            <a className="btn solid reveal" href="#work">View my work</a>
+            <a className="btn reveal" href={GITHUB} target="_blank" rel="noreferrer"><FaGithub /> GitHub</a>
+            <a className="btn reveal" href={LINKEDIN} target="_blank" rel="noreferrer"><FaLinkedinIn /> LinkedIn</a>
+          </div>
+
+          <div className="glance">
+            <div className="stat reveal"><div className="big">~2 yrs</div><div className="lbl">building &amp; shipping in production</div></div>
+            <div className="stat reveal"><div className="big">Mobile + Web</div><div className="lbl">full-stack across platforms</div></div>
+            <div className="stat reveal"><div className="big mono">CI/CD</div><div className="lbl">owns mobile releases &amp; deploys</div></div>
+            <div className="stat reveal"><div className="big mono">AI-assisted</div><div className="lbl">spec-driven dev workflow</div></div>
+          </div>
+        </div>
+      </header>
+
+      <section id="work" className="pf-section">
+        <div className="pf-wrap">
+          <div className="sec-head reveal"><span className="sec-num">01</span><span className="sec-title">Selected Work</span></div>
+          <div className="projects">
+            {projects.map((p) => (
+              <div
+                key={p.name}
+                className={`proj reveal${p.images ? " clickable" : ""}`}
+                onClick={() => openProject(p)}
+                role={p.images ? "button" : undefined}
+                tabIndex={p.images ? 0 : undefined}
+                onKeyDown={(e) => { if (p.images && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openProject(p); } }}
+              >
+                <div className="thumb" style={p.images ? { padding: 0, background: "#0a0d14" } : { background: p.grad }}>
+                  {p.images ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.images[0]} alt={p.name} />
+                      <div className="overlay">View screenshots &rarr;</div>
+                    </>
+                  ) : (
+                    <span className="glyph" style={{ color: p.glyphColor }}>{p.glyph}</span>
+                  )}
+                  <span className={`badge ${p.badge}`}>{p.status}</span>
+                </div>
+                <div className="proj-body">
+                  <h3>{p.name}</h3>
+                  <div className="role">{p.role}</div>
+                  <p>{p.desc}</p>
+                  <div className="tags">{p.tags.map((t) => <span className="tag" key={t}>{t}</span>)}</div>
+                </div>
               </div>
-              <Separator className="mt-2 md:hidden block" />
-              <div className="flex flex-col items-center">
-                <p className="font-semibold">2018 - 2020</p>
-                <CardDescription className="italic text-center">Science, Technology, Engineering, Mathematics (STEM)</CardDescription>
-                <CardDescription className="italic text-center">Pre Computer Science</CardDescription>
-                <Separator className="mt-2 hidden md:block" />
-                <CardDescription className="text-center">Ateneo de Davao University</CardDescription>
-                <CardDescription className="text-center">Bangkal, Davao City</CardDescription>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="experience" className="pf-section" style={{ background: "var(--bg2)" }}>
+        <div className="pf-wrap">
+          <div className="sec-head reveal"><span className="sec-num">02</span><span className="sec-title">Experience</span></div>
+          <div className="tl">
+            {experience.map((j) => (
+              <div className="item reveal" key={j.company}>
+                <div className="top">
+                  <div><div className="r">{j.role}</div><div className="co">{j.company}</div></div>
+                  <div className="dt">{j.dates}</div>
+                </div>
+                <p>{j.desc}</p>
               </div>
-            </div>
-          </CardHeader>
-        </Card>
-        <Card id="experience" className="col-span-4 w-full flex flex-col items-center justify-center" hoverEffect={false}>
-          <CardHeader>
-            <CardTitle>Work Experience</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <div className="flex flex-row justify-around border rounded-lg p-6">
-                    <div className="flex flex-col items-center">
-                      <p className="font-semibold">Full-Stack Developer</p>
-                      <p className="font-thin">July 2024 - Present</p>
-                      <p className="font-thin">Apollo Technologies, Inc.</p>
-                      <p className="font-thin text-xs">Obrero, Davao City</p>
-                    </div>
-                  </div>
-                </HoverCardTrigger>
-                <HoverCardContent className="w-96 text-justify text-xs font-extralight">
-                  During my time at the company, I gained a full-stack experience, with a primary focus on front-end development while also contributing to backend tasks. I successfully deployed a new UI reskin using Vue.js and the Quasar Framework. The majority of my efforts were dedicated to developing a mobile application with Flutter, utilizing BLoc for state management. I was also tasked with cooperating with another dev team improve the back-end of their service which utilizes the KillBill open source API
-                </HoverCardContent>
-              </HoverCard>
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <div className="flex flex-row justify-around border rounded-lg p-6">
-                    <div className="flex flex-col items-center">
-                      <p className="font-semibold">Full-Stack Developer Intern</p>
-                      <p className="font-thin">Nov 2023 - Feb 2024</p>
-                      <p className="font-thin">NHTS Department, DSWD</p>
-                      <p className="font-thin text-xs">Bago Oshiro, Davao City</p>
-                    </div>
-                  </div>
-                </HoverCardTrigger>
-                <HoverCardContent className="w-96 text-justify text-xs font-extralight">
-                  In my internship in DSWD, i was tasked in developing a request document management system that would be used by the Region XI of DSWD which has a SMS/email notification feature and cloud storage. I had a full-stack experience in making this system including the engineering side of it. I was also tasked in complying to quality assurance demands for deployment
-                </HoverCardContent>
-              </HoverCard>
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <div className="flex flex-row justify-around border rounded-lg p-6">
-                    <div className="flex flex-col items-center">
-                      <p className="font-semibold">Back-End Developer Intern</p>
-                      <p className="font-thin">July 2023 - Oct 2023</p>
-                      <p className="font-thin">Next BPO Solutions, Inc.</p>
-                      <p className="font-thin text-xs">Sandawa, Ecoland, Davao City</p>
-                    </div>
-                  </div>
-                </HoverCardTrigger>
-                <HoverCardContent className="w-96 text-justify text-xs font-extralight">
-                  This is my first industry experience so I had a lot of learning. I was tasked in developing a backend employee module for their system that would be used by the company for their internal use. Its mostly simple rest api functions but it was a good start for me to understand how things work in the industry.
-                </HoverCardContent>
-              </HoverCard>
-            </div>
-          </CardContent>
-        </Card>
-        <Card id="projects" className="col-span-4" hoverEffect={false}>
-          <CardHeader><CardTitle className="text-center">Projects</CardTitle></CardHeader>
-          <CardContent className="flex justify-center">
-            <ProjectCarousel />
-          </CardContent>
-        </Card>
-        <Card id="skills" className="col-span-4" hoverEffect={false}>
-          <CardHeader><CardTitle className="text-center">Skills</CardTitle></CardHeader>
-          <CardContent>
-            <SkillGrid />
-          </CardContent>
-        </Card>
-      </div>
-    </main >
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="skills" className="pf-section">
+        <div className="pf-wrap">
+          <div className="sec-head reveal"><span className="sec-num">03</span><span className="sec-title">Skills</span></div>
+          <div className="skillgrid">
+            {skills.map(({ name, Icon, color }) => (
+              <div className="skilltile reveal" key={name} style={{ ["--b" as string]: color } as React.CSSProperties}>
+                <div className="logo"><Icon size={29} color={color} /></div>
+                <div className="nm">{name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" className="contact">
+        <div className="pf-wrap">
+          <h2 className="reveal">Let&apos;s build something.</h2>
+          <p className="reveal">The fastest way to reach me:</p>
+          <div className="row">
+            <a className="btn solid reveal" href={`mailto:${EMAIL}`}>{EMAIL}</a>
+            <a className="btn reveal" href={GITHUB} target="_blank" rel="noreferrer"><FaGithub /> GitHub</a>
+            <a className="btn reveal" href={LINKEDIN} target="_blank" rel="noreferrer"><FaLinkedinIn /> LinkedIn</a>
+          </div>
+        </div>
+      </section>
+
+      <footer className="pf-footer">© 2026 Mark Levi Rowse M. Ramos · Davao City, Philippines</footer>
+
+      {lb && (
+        <div className="lightbox" onClick={close}>
+          <button className="lb-close" onClick={close} aria-label="Close">&times;</button>
+          {lb.images.length > 1 && (
+            <button className="lb-arrow left" onClick={(e) => { e.stopPropagation(); step(-1); }} aria-label="Previous">&#8249;</button>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lb.images[lb.i]} alt={`${lb.title} screenshot ${lb.i + 1}`} onClick={(e) => e.stopPropagation()} />
+          {lb.images.length > 1 && (
+            <button className="lb-arrow right" onClick={(e) => { e.stopPropagation(); step(1); }} aria-label="Next">&#8250;</button>
+          )}
+          <div className="lb-dots">
+            {lb.images.map((_, i) => <span key={i} className={`lb-dot${i === lb.i ? " active" : ""}`} />)}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
