@@ -106,35 +106,54 @@ export default function Home() {
         <div className="pf-wrap">
           <div className="sec-head reveal"><span className="sec-num">01</span><span className="sec-title">Selected Work</span></div>
           <div className="projects">
-            {projects.map((p) => (
-              <div
-                key={p.name}
-                className={`proj reveal${p.images ? " clickable" : ""}`}
-                onClick={() => openProject(p)}
-                role={p.images ? "button" : undefined}
-                tabIndex={p.images ? 0 : undefined}
-                onKeyDown={(e) => { if (p.images && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openProject(p); } }}
-              >
-                <div className="thumb" style={p.images ? { padding: 0, background: "#0a0d14" } : { background: p.grad }}>
-                  {p.images ? (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.images[0]} alt={p.name} />
-                      <div className="overlay">View screenshots &rarr;</div>
-                    </>
-                  ) : (
-                    <span className="glyph" style={{ color: p.glyphColor }}>{p.glyph}</span>
-                  )}
-                  <span className={`badge ${p.badge}`}>{p.status}</span>
+            {projects.map((p) => {
+              const content = (
+                <>
+                  <div className="thumb" style={p.images ? { padding: 0, background: "#0a0d14" } : { background: p.grad }}>
+                    {p.images ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={p.images[0]} alt={p.name} />
+                        <div className="overlay">View screenshots &rarr;</div>
+                      </>
+                    ) : (
+                      <>
+                        <span className="glyph" style={{ color: p.glyphColor }}>{p.glyph}</span>
+                        {p.link && <div className="overlay">Visit live site &rarr;</div>}
+                      </>
+                    )}
+                    <span className={`badge ${p.badge}`}>{p.status}</span>
+                  </div>
+                  <div className="proj-body">
+                    <h3>{p.name}</h3>
+                    <div className="role">{p.role}</div>
+                    <p>{p.desc}</p>
+                    <div className="tags">{p.tags.map((t) => <span className="tag" key={t}>{t}</span>)}</div>
+                  </div>
+                </>
+              );
+
+              if (p.link && !p.images) {
+                return (
+                  <a key={p.name} className="proj reveal clickable" href={p.link} target="_blank" rel="noreferrer">
+                    {content}
+                  </a>
+                );
+              }
+
+              return (
+                <div
+                  key={p.name}
+                  className={`proj reveal${p.images ? " clickable" : ""}`}
+                  onClick={() => openProject(p)}
+                  role={p.images ? "button" : undefined}
+                  tabIndex={p.images ? 0 : undefined}
+                  onKeyDown={(e) => { if (p.images && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openProject(p); } }}
+                >
+                  {content}
                 </div>
-                <div className="proj-body">
-                  <h3>{p.name}</h3>
-                  <div className="role">{p.role}</div>
-                  <p>{p.desc}</p>
-                  <div className="tags">{p.tags.map((t) => <span className="tag" key={t}>{t}</span>)}</div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

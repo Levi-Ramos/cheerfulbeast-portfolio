@@ -19,9 +19,22 @@ export type Project = {
   glyphColor?: string;
   grad?: string;
   images?: string[];
+  link?: string;
 };
 
 export const projects: Project[] = [
+  {
+    name: "Resume Fit Checker",
+    status: "SHIPPED",
+    badge: "ship",
+    role: "Solo build — RAG pipeline + full-stack",
+    desc: "Grounded, citation-backed resume-vs-job-description fit checker — retrieves evidence per requirement from an embedded resume and scores match/partial/gap via Gemini, citing exact quotes instead of inventing a match.",
+    tags: ["Next.js", "Vercel AI SDK", "Gemini", "TypeScript", "RAG"],
+    glyph: "FIT",
+    glyphColor: "#22d3ee",
+    grad: "linear-gradient(135deg,#0a2a30,#0a0d14)",
+    link: "https://resume-fit-checker.vercel.app",
+  },
   {
     name: "ActiveOne Field Sales",
     status: "IN DEV",
