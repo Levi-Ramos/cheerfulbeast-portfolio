@@ -59,10 +59,10 @@ export const projects: Project[] = [
   },
   {
     name: "ServePOS",
-    status: "SHIPPED",
-    badge: "ship",
+    status: "TESTING",
+    badge: "dev",
     role: "Feature dev + release automation",
-    desc: "BIR-compliant mobile point-of-sale, in production with pilot clients. Contributed Flutter features and owned the mobile release pipeline (Fastlane, TestFlight).",
+    desc: "BIR-compliant mobile point-of-sale, in pilot testing with clients. Contributed Flutter features and owned the mobile release pipeline (Fastlane, TestFlight).",
     tags: ["Flutter", "Dart", "Bloc"],
     glyph: "POS",
     glyphColor: "#22d3ee",
