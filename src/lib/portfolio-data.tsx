@@ -29,7 +29,7 @@ export const projects: Project[] = [
     badge: "ship",
     role: "Solo build — RAG pipeline + full-stack",
     desc: "Grounded, citation-backed resume-vs-job-description fit checker — retrieves evidence per requirement from an embedded resume and scores match/partial/gap via Gemini, citing exact quotes instead of inventing a match.",
-    tags: ["Next.js", "Vercel AI SDK", "Gemini", "TypeScript", "RAG"],
+    tags: ["Next.js", "Vercel AI SDK", "Gemini", "TypeScript", "Drizzle", "PostgreSQL", "Clerk", "RAG"],
     glyph: "FIT",
     glyphColor: "#22d3ee",
     grad: "linear-gradient(135deg,#0a2a30,#0a0d14)",
