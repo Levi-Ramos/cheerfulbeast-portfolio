@@ -3,13 +3,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaGithub, FaLinkedinIn } from "react-icons/fa6";
 import { Lock, Search } from "lucide-react";
-import { projects, experience, skills, type Project } from "@/lib/portfolio-data";
+import { projects, experience, skills, type Project, type TermLine } from "@/lib/portfolio-data";
 
 const GITHUB = "https://github.com/Levi-Ramos";
 const LINKEDIN = "https://www.linkedin.com/in/rowserowserowse/";
 const EMAIL = "leviramos59@gmail.com";
 
-type LB = { images: string[]; i: number; title: string; link?: string };
+type LB = { i: number; title: string; link?: string; images?: string[]; terminal?: { title: string; lines: TermLine[] } };
 
 const NAV_LINKS = [
   { id: "projects", label: "Projects" },
@@ -126,11 +126,12 @@ export default function Home() {
   const reducedRef = useRef(false);
 
   const openProject = (p: Project) => {
-    if (p.images && p.images.length) setLb({ images: p.images, i: 0, title: p.name, link: p.link });
+    if (p.terminal) setLb({ i: 0, title: p.name, terminal: p.terminal });
+    else if (p.images && p.images.length) setLb({ images: p.images, i: 0, title: p.name, link: p.link });
   };
   const closeLb = () => setLb(null);
   const stepLb = (d: number) => {
-    setLb((s) => (s ? { ...s, i: (s.i + d + s.images.length) % s.images.length } : s));
+    setLb((s) => (s?.images ? { ...s, i: (s.i + d + s.images.length) % s.images.length } : s));
   };
 
   // ---------- shared helpers (touch only refs/setters — safe to define once per render) ----------
@@ -589,11 +590,14 @@ export default function Home() {
       dot.style.display = "none";
     }
 
-    // starfield
+    // starfield + the odd comet streaking past
     const canvas = starfieldRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
       let stars: { x: number; y: number; r: number; phase: number; speed: number }[] = [];
+      type Comet = { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; len: number };
+      let comets: Comet[] = [];
+      let nextCometAt = 4 + Math.random() * 6;
       const resize = () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -610,6 +614,22 @@ export default function Home() {
         }
         draw(0);
       };
+      const spawnComet = () => {
+        const fromLeft = Math.random() < 0.5;
+        const drop = Math.PI / 7 + Math.random() * (Math.PI / 9); // shallow downward angle
+        const angle = fromLeft ? drop : Math.PI - drop;
+        const speed = 7 + Math.random() * 5;
+        const len = 70 + Math.random() * 50;
+        comets.push({
+          x: fromLeft ? -len : canvas.width + len,
+          y: Math.random() * canvas.height * 0.55,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 0,
+          maxLife: 70,
+          len,
+        });
+      };
       const draw = (t: number) => {
         if (!ctx) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -622,6 +642,35 @@ export default function Home() {
           ctx.fill();
         });
         ctx.globalAlpha = 1;
+
+        if (!reduced) {
+          if (t > nextCometAt) {
+            spawnComet();
+            nextCometAt = t + 5 + Math.random() * 9;
+          }
+          comets = comets.filter((c) => c.life < c.maxLife);
+          comets.forEach((c) => {
+            c.x += c.vx; c.y += c.vy; c.life++;
+            const mag = Math.hypot(c.vx, c.vy) || 1;
+            const tailX = c.x - (c.vx / mag) * c.len;
+            const tailY = c.y - (c.vy / mag) * c.len;
+            const fade = 1 - c.life / c.maxLife;
+            const grad = ctx.createLinearGradient(tailX, tailY, c.x, c.y);
+            grad.addColorStop(0, "rgba(232,237,244,0)");
+            grad.addColorStop(1, `rgba(232,237,244,${0.85 * fade})`);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(tailX, tailY);
+            ctx.lineTo(c.x, c.y);
+            ctx.stroke();
+            ctx.globalAlpha = fade;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 1.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+          });
+        }
       };
       window.addEventListener("resize", resize);
       cleanups.push(() => window.removeEventListener("resize", resize));
@@ -950,7 +999,15 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="terminal reveal" ref={heroTermRef} style={{ transitionDelay: "120ms" }}>
+            <div
+              className="terminal reveal"
+              ref={heroTermRef}
+              style={{ transitionDelay: "120ms" }}
+              onClick={() => {
+                if (window.getSelection()?.toString()) return; // don't yank focus mid text-selection
+                heroTermInputRef.current?.focus();
+              }}
+            >
               <div className="term-bar" ref={heroTermBarRef}>
                 <span className="dot r" /><span className="dot y" /><span className="dot g" />
                 <span className="term-title">guest@mark-ramos: ~</span>
@@ -990,21 +1047,30 @@ export default function Home() {
           <div className="sec-head reveal"><span className="sec-num">01</span><span className="sec-title">Selected Projects</span><span className="sec-sub">tilt a card</span></div>
           <div className="projects">
             {projects.map((p, i) => {
+              const hasModal = !!(p.images?.length || p.terminal);
+              const overlay = p.images?.length
+                ? (p.imagesLabel ?? "View screenshots →")
+                : p.terminal
+                ? (p.imagesLabel ?? "View install →")
+                : p.link
+                ? "Visit live site →"
+                : null;
+
               const content = (
                 <>
-                  <div className="thumb" style={p.images ? { padding: 0, background: "#0a0d14" } : { background: p.grad }}>
-                    {p.images ? (
+                  <div className="thumb" style={p.images?.length ? { padding: 0, background: "#0a0d14" } : { background: p.grad }}>
+                    {p.images?.length ? (
                       <>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={p.images[0]} alt={p.name} />
-                        <div className="overlay">{p.imagesLabel ?? "View screenshots →"}</div>
+                        <div className="overlay">{overlay}</div>
                       </>
                     ) : p.locked ? (
                       <Lock size={34} color={p.glyphColor} strokeWidth={1.5} />
                     ) : (
                       <>
                         <span className="glyph" style={{ color: p.glyphColor }}>{p.glyph}</span>
-                        {p.link && <div className="overlay">Visit live site &rarr;</div>}
+                        {overlay && <div className="overlay">{overlay}</div>}
                       </>
                     )}
                     <span className={`badge ${p.badge}`}><span className="bdot" />{p.status}</span>
@@ -1022,7 +1088,7 @@ export default function Home() {
                 projectRefs.current[i] = el;
               };
 
-              if (p.link && !p.images) {
+              if (p.link && !hasModal) {
                 return (
                   <a key={p.name} ref={setRef} className="proj reveal clickable" href={p.link} target="_blank" rel="noreferrer">
                     {content}
@@ -1034,11 +1100,11 @@ export default function Home() {
                 <div
                   key={p.name}
                   ref={setRef}
-                  className={`proj reveal${p.images ? " clickable" : ""}`}
+                  className={`proj reveal${hasModal ? " clickable" : ""}`}
                   onClick={() => openProject(p)}
-                  role={p.images ? "button" : undefined}
-                  tabIndex={p.images ? 0 : undefined}
-                  onKeyDown={(e) => { if (p.images && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openProject(p); } }}
+                  role={hasModal ? "button" : undefined}
+                  tabIndex={hasModal ? 0 : undefined}
+                  onKeyDown={(e) => { if (hasModal && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openProject(p); } }}
                 >
                   {content}
                 </div>
@@ -1138,17 +1204,41 @@ export default function Home() {
       {lb && (
         <div className="lightbox" onClick={closeLb}>
           <button className="lb-close" onClick={closeLb} aria-label="Close">&times;</button>
-          {lb.images.length > 1 && (
-            <button className="lb-arrow left" onClick={(e) => { e.stopPropagation(); stepLb(-1); }} aria-label="Previous">&#8249;</button>
+          {lb.terminal ? (
+            <div className="terminal lb-terminal" onClick={(e) => e.stopPropagation()}>
+              <div className="term-bar">
+                <span className="dot r" /><span className="dot y" /><span className="dot g" />
+                <span className="term-title">{lb.terminal.title}</span>
+              </div>
+              <div className="term-body">
+                {lb.terminal.lines.map(([text, cls], i) => (
+                  <div key={i} className={`ln${cls ? ` ${cls}` : ""}`}>{text}</div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              {(lb.images?.length ?? 0) > 1 && (
+                <button className="lb-arrow left" onClick={(e) => { e.stopPropagation(); stepLb(-1); }} aria-label="Previous">&#8249;</button>
+              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={lb.images![lb.i]}
+                alt={`${lb.title} screenshot ${lb.i + 1}`}
+                className={lb.link ? "clickable" : undefined}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (lb.link) window.open(lb.link, "_blank", "noreferrer");
+                }}
+              />
+              {(lb.images?.length ?? 0) > 1 && (
+                <button className="lb-arrow right" onClick={(e) => { e.stopPropagation(); stepLb(1); }} aria-label="Next">&#8250;</button>
+              )}
+              <div className="lb-dots">
+                {lb.images?.map((_, i) => <span key={i} className={`lb-dot${i === lb.i ? " active" : ""}`} />)}
+              </div>
+            </>
           )}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lb.images[lb.i]} alt={`${lb.title} screenshot ${lb.i + 1}`} onClick={(e) => e.stopPropagation()} />
-          {lb.images.length > 1 && (
-            <button className="lb-arrow right" onClick={(e) => { e.stopPropagation(); stepLb(1); }} aria-label="Next">&#8250;</button>
-          )}
-          <div className="lb-dots">
-            {lb.images.map((_, i) => <span key={i} className={`lb-dot${i === lb.i ? " active" : ""}`} />)}
-          </div>
           {lb.link && (
             <a className="lb-link" href={lb.link} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
               Visit live site &rarr;

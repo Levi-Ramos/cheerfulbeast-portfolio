@@ -8,6 +8,8 @@ import { FaJava, FaVuejs, FaPhp, FaPython, FaDocker, FaReact } from "react-icons
 import { BiLogoSpringBoot } from "react-icons/bi";
 import { TbBrandCSharp } from "react-icons/tb";
 
+export type TermLine = [text: string, cls?: "p" | "out" | "warn" | "ok" | "dim"];
+
 export type Project = {
   name: string;
   status: string;
@@ -20,6 +22,7 @@ export type Project = {
   grad?: string;
   images?: string[];
   imagesLabel?: string;
+  terminal?: { title: string; lines: TermLine[] };
   link?: string;
   locked?: boolean;
 };
@@ -48,8 +51,24 @@ export const projects: Project[] = [
     glyph: "D2",
     glyphColor: "#f5a623",
     grad: "linear-gradient(135deg,#2a1f0a,#0a0d14)",
-    images: ["/d2-mcp-install.png"],
     imagesLabel: "View install →",
+    terminal: {
+      title: "guest@mark-ramos: ~/destiny2-mcp",
+      lines: [
+        ["$ claude mcp add --transport http destiny2 https://destiny2-mcp.onrender.com/mcp", "p"],
+        ["✓ added — no clone, no local install, no API key of your own", "ok"],
+        ["", "out"],
+        ["# or, any MCP client that takes raw JSON (Claude Desktop, etc.)", "dim"],
+        ["{", "out"],
+        ['  "mcpServers": {', "out"],
+        ['    "destiny2": { "url": "https://destiny2-mcp.onrender.com/mcp" }', "out"],
+        ["  }", "out"],
+        ["}", "out"],
+        ["", "out"],
+        ["# first tool call opens a Bungie sign-in page —", "dim"],
+        ["# grants access to your own account only, nothing shared", "dim"],
+      ],
+    },
   },
   {
     name: "ActiveOne Field Sales",

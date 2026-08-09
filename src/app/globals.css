@@ -87,10 +87,15 @@ button, input { font-family:inherit; color:inherit; }
 .term-bar .dot.r { background:#ff5f57; } .term-bar .dot.y { background:#febc2e; } .term-bar .dot.g { background:#28c840; }
 .term-title { margin-left:8px; font-family:var(--mono); font-size:12px; color:var(--dim); }
 .term-body { padding:16px 18px; font-family:var(--mono); font-size:13px; line-height:1.7; min-height:230px; max-height:340px; overflow-y:auto; }
+.terminal .term-body { cursor:text; }
 .term-body .ln { white-space:pre-wrap; word-break:break-word; }
 .term-body .p { color:var(--accent2); }
 .term-body .out { color:var(--muted); }
 .term-body .warn { color:var(--warn); }
+.term-body .ok { color:var(--accent); }
+.term-body .dim { color:var(--dim); }
+.lb-terminal { width:min(90vw,720px); }
+.lb-terminal .term-body { cursor:text; max-height:70vh; }
 .term-link { color:var(--accent); text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
 .term-inputline { display:flex; align-items:center; gap:8px; padding:0 18px 16px; font-family:var(--mono); font-size:13px; }
 .term-inputline .prompt { color:var(--accent2); white-space:nowrap; }
@@ -176,6 +181,7 @@ button, input { font-family:inherit; color:inherit; }
 /* lightbox */
 .lightbox { position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.86); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:40px; }
 .lightbox img { max-height:86vh; max-width:min(90vw,900px); border-radius:16px; box-shadow:0 30px 80px -20px #000; }
+.lightbox img.clickable { cursor:pointer; }
 .lb-close { position:absolute; top:20px; right:24px; font-size:26px; color:#fff; background:none; border:none; cursor:pointer; line-height:1; }
 .lb-arrow { position:absolute; top:50%; transform:translateY(-50%); font-size:26px; color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); width:46px; height:46px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .lb-arrow.left { left:24px; } .lb-arrow.right { right:24px; }
