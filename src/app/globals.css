@@ -245,4 +245,7 @@ button, input { font-family:inherit; color:inherit; }
   .sec-sub{ display:none; }
   body{ cursor:auto; }
   #cursor-dot{ display:none; }
+  .pf-nav .inner{ padding:0 20px; gap:10px; }
+  .kbd-hint{ display:none; }
+  .btn.solid{ padding:8px 14px; font-size:12px; white-space:nowrap; }
 }
