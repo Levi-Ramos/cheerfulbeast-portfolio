@@ -9,7 +9,7 @@ const GITHUB = "https://github.com/Levi-Ramos";
 const LINKEDIN = "https://www.linkedin.com/in/rowserowserowse/";
 const EMAIL = "leviramos59@gmail.com";
 
-type LB = { images: string[]; i: number; title: string };
+type LB = { images: string[]; i: number; title: string; link?: string };
 
 const NAV_LINKS = [
   { id: "projects", label: "Projects" },
@@ -126,7 +126,7 @@ export default function Home() {
   const reducedRef = useRef(false);
 
   const openProject = (p: Project) => {
-    if (p.images && p.images.length) setLb({ images: p.images, i: 0, title: p.name });
+    if (p.images && p.images.length) setLb({ images: p.images, i: 0, title: p.name, link: p.link });
   };
   const closeLb = () => setLb(null);
   const stepLb = (d: number) => {
@@ -997,7 +997,7 @@ export default function Home() {
                       <>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={p.images[0]} alt={p.name} />
-                        <div className="overlay">View screenshots &rarr;</div>
+                        <div className="overlay">{p.imagesLabel ?? "View screenshots →"}</div>
                       </>
                     ) : p.locked ? (
                       <Lock size={34} color={p.glyphColor} strokeWidth={1.5} />
@@ -1149,6 +1149,11 @@ export default function Home() {
           <div className="lb-dots">
             {lb.images.map((_, i) => <span key={i} className={`lb-dot${i === lb.i ? " active" : ""}`} />)}
           </div>
+          {lb.link && (
+            <a className="lb-link" href={lb.link} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
+              Visit live site &rarr;
+            </a>
+          )}
         </div>
       )}
     </>

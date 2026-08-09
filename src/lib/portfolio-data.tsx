@@ -19,6 +19,7 @@ export type Project = {
   glyphColor?: string;
   grad?: string;
   images?: string[];
+  imagesLabel?: string;
   link?: string;
   locked?: boolean;
 };
@@ -35,17 +36,20 @@ export const projects: Project[] = [
     glyphColor: "#22d3ee",
     grad: "linear-gradient(135deg,#0a2a30,#0a0d14)",
     link: "https://resume-fit-checker.vercel.app",
+    images: ["/resume-fit-landing.png", "/resume-fit-filled.png", "/resume-fit-results.png"],
   },
   {
     name: "Destiny 2 MCP Server",
     status: "SHIPPED",
     badge: "ship",
     role: "Solo build — MCP server + Bungie API",
-    desc: "An MCP server that connects AI assistants directly to Bungie's Destiny 2 API — search your inventory, equip or transfer gear across characters, and reason about loadouts and theorycrafting, straight from chat.",
-    tags: ["MCP", "TypeScript", "Node.js", "Express", "Bungie API"],
+    desc: "An MCP server that connects AI assistants directly to Bungie's Destiny 2 API — search your inventory, equip or transfer gear across characters, and reason about loadouts and theorycrafting, straight from chat. Hosted remotely with OAuth — add it by URL, no local install or API key needed.",
+    tags: ["MCP", "TypeScript", "Node.js", "Express", "Bungie API", "OAuth"],
     glyph: "D2",
     glyphColor: "#f5a623",
     grad: "linear-gradient(135deg,#2a1f0a,#0a0d14)",
+    images: ["/d2-mcp-install.png"],
+    imagesLabel: "View install →",
   },
   {
     name: "ActiveOne Field Sales",

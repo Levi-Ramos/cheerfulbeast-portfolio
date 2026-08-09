@@ -175,13 +175,15 @@ button, input { font-family:inherit; color:inherit; }
 
 /* lightbox */
 .lightbox { position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.86); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:40px; }
-.lightbox img { max-height:86vh; max-width:min(90vw,460px); border-radius:16px; box-shadow:0 30px 80px -20px #000; }
+.lightbox img { max-height:86vh; max-width:min(90vw,900px); border-radius:16px; box-shadow:0 30px 80px -20px #000; }
 .lb-close { position:absolute; top:20px; right:24px; font-size:26px; color:#fff; background:none; border:none; cursor:pointer; line-height:1; }
 .lb-arrow { position:absolute; top:50%; transform:translateY(-50%); font-size:26px; color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); width:46px; height:46px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .lb-arrow.left { left:24px; } .lb-arrow.right { right:24px; }
 .lb-dots { position:absolute; bottom:28px; left:0; right:0; display:flex; gap:8px; justify-content:center; }
 .lb-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.3); }
 .lb-dot.active { background:#fff; }
+.lb-link { position:absolute; bottom:28px; right:24px; color:#fff; font-size:13px; text-decoration:none; opacity:.8; }
+.lb-link:hover { opacity:1; text-decoration:underline; }
 
 /* command palette */
 .palette-overlay { position:fixed; inset:0; z-index:200; background:rgba(6,8,13,.7); backdrop-filter:blur(3px); display:flex; align-items:flex-start; justify-content:center; padding-top:14vh; opacity:0; pointer-events:none; transition:opacity .16s; }
