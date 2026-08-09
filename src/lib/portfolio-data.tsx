@@ -20,6 +20,7 @@ export type Project = {
   grad?: string;
   images?: string[];
   link?: string;
+  locked?: boolean;
 };
 
 export const projects: Project[] = [
@@ -36,15 +37,26 @@ export const projects: Project[] = [
     link: "https://resume-fit-checker.vercel.app",
   },
   {
+    name: "Destiny 2 MCP Server",
+    status: "SHIPPED",
+    badge: "ship",
+    role: "Solo build — MCP server + Bungie API",
+    desc: "An MCP server that connects AI assistants directly to Bungie's Destiny 2 API — search your inventory, equip or transfer gear across characters, and reason about loadouts and theorycrafting, straight from chat.",
+    tags: ["MCP", "TypeScript", "Node.js", "Express", "Bungie API"],
+    glyph: "D2",
+    glyphColor: "#f5a623",
+    grad: "linear-gradient(135deg,#2a1f0a,#0a0d14)",
+  },
+  {
     name: "ActiveOne Field Sales",
     status: "IN DEV",
     badge: "dev",
     role: "Sole developer",
     desc: "Greenfield field-sales mobile app for an enterprise ERP — building it from scratch in Flutter to replace a legacy Delphi mobile app. Confidential, in active development.",
     tags: ["Flutter", "Dart", "Bloc", "GitHub Actions", "Fastlane"],
-    glyph: "\u{1F512}",
     glyphColor: "#4ade80",
     grad: "linear-gradient(135deg,#0f2318,#0a0d14)",
+    locked: true,
   },
   {
     name: "ActiveWork",
@@ -53,9 +65,9 @@ export const projects: Project[] = [
     role: "Primary dev, web client",
     desc: "Enterprise payroll / HRMS platform. Built the web client and contributed across the .NET backend and the Next.js / React frontend migration. Confidential.",
     tags: ["Blazor", ".NET", "Next.js", "PostgreSQL", "Docker"],
-    glyph: "\u{1F512}",
     glyphColor: "#bb9af7",
     grad: "linear-gradient(135deg,#1a1630,#0a0d14)",
+    locked: true,
   },
   {
     name: "ServePOS",
