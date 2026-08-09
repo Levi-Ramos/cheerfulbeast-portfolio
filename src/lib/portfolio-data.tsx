@@ -49,7 +49,7 @@ export const projects: Project[] = [
   },
   {
     name: "ActiveOne Field Sales",
-    status: "IN DEV",
+    status: "CONFIDENTIAL",
     badge: "dev",
     role: "Sole developer",
     desc: "Greenfield field-sales mobile app for an enterprise ERP — building it from scratch in Flutter to replace a legacy Delphi mobile app. Confidential, in active development.",
@@ -60,7 +60,7 @@ export const projects: Project[] = [
   },
   {
     name: "ActiveWork",
-    status: "IN DEV",
+    status: "CONFIDENTIAL",
     badge: "dev",
     role: "Primary dev, web client",
     desc: "Enterprise payroll / HRMS platform. Built the web client and contributed across the .NET backend and the Next.js / React frontend migration. Confidential.",
@@ -71,7 +71,7 @@ export const projects: Project[] = [
   },
   {
     name: "ServePOS",
-    status: "TESTING",
+    status: "CONFIDENTIAL",
     badge: "dev",
     role: "Feature dev + release automation",
     desc: "BIR-compliant mobile point-of-sale, in pilot testing with clients. Contributed Flutter features and owned the mobile release pipeline (Fastlane, TestFlight).",
