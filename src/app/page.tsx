@@ -1048,6 +1048,7 @@ export default function Home() {
           <div className="projects">
             {projects.map((p, i) => {
               const hasModal = !!(p.images?.length || p.terminal);
+              const showThumbImage = !!(p.images?.length && !p.thumbGlyph);
               const overlay = p.images?.length
                 ? (p.imagesLabel ?? "View screenshots →")
                 : p.terminal
@@ -1058,11 +1059,11 @@ export default function Home() {
 
               const content = (
                 <>
-                  <div className="thumb" style={p.images?.length ? { padding: 0, background: "#0a0d14" } : { background: p.grad }}>
-                    {p.images?.length ? (
+                  <div className="thumb" style={showThumbImage ? { padding: 0, background: "#0a0d14" } : { background: p.grad }}>
+                    {showThumbImage ? (
                       <>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p.images[0]} alt={p.name} />
+                        <img src={p.images![0]} alt={p.name} />
                         <div className="overlay">{overlay}</div>
                       </>
                     ) : p.locked ? (

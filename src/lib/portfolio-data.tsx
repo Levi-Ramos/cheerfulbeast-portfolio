@@ -22,6 +22,7 @@ export type Project = {
   grad?: string;
   images?: string[];
   imagesLabel?: string;
+  thumbGlyph?: boolean;
   terminal?: { title: string; lines: TermLine[] };
   link?: string;
   locked?: boolean;
@@ -29,17 +30,18 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    name: "Resume Fit Checker",
+    name: "Groundtruth",
     status: "SHIPPED",
     badge: "ship",
     role: "Solo build — RAG pipeline + full-stack",
     desc: "Grounded, citation-backed resume-vs-job-description fit checker — retrieves evidence per requirement from an embedded resume and scores match/partial/gap via Gemini, citing exact quotes instead of inventing a match.",
     tags: ["Next.js", "Vercel AI SDK", "Gemini", "TypeScript", "Drizzle", "PostgreSQL", "Clerk", "RAG"],
-    glyph: "FIT",
-    glyphColor: "#22d3ee",
-    grad: "linear-gradient(135deg,#0a2a30,#0a0d14)",
+    glyph: "GT",
+    glyphColor: "#34d399",
+    grad: "linear-gradient(135deg,#0b1f16,#0a0d14)",
+    thumbGlyph: true,
     link: "https://resume-fit-checker.vercel.app",
-    images: ["/resume-fit-landing.png", "/resume-fit-filled.png", "/resume-fit-results.png"],
+    images: ["/groundtruth-landing.png", "/groundtruth-filled.png"],
   },
   {
     name: "Destiny 2 MCP Server",
