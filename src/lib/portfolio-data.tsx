@@ -22,7 +22,6 @@ export type Project = {
   grad?: string;
   images?: string[];
   imagesLabel?: string;
-  thumbGlyph?: boolean;
   terminal?: { title: string; lines: TermLine[] };
   link?: string;
   locked?: boolean;
@@ -39,7 +38,6 @@ export const projects: Project[] = [
     glyph: "GT",
     glyphColor: "#34d399",
     grad: "linear-gradient(135deg,#0b1f16,#0a0d14)",
-    thumbGlyph: true,
     link: "https://resume-fit-checker.vercel.app",
     images: ["/groundtruth-landing.png", "/groundtruth-filled.png"],
   },

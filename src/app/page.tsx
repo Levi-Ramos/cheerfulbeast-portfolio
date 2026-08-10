@@ -1048,7 +1048,7 @@ export default function Home() {
           <div className="projects">
             {projects.map((p, i) => {
               const hasModal = !!(p.images?.length || p.terminal);
-              const showThumbImage = !!(p.images?.length && !p.thumbGlyph);
+              const showThumbImage = !!p.images?.length;
               const overlay = p.images?.length
                 ? (p.imagesLabel ?? "View screenshots →")
                 : p.terminal
