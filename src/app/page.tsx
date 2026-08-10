@@ -9,7 +9,7 @@ const GITHUB = "https://github.com/Levi-Ramos";
 const LINKEDIN = "https://www.linkedin.com/in/rowserowserowse/";
 const EMAIL = "leviramos59@gmail.com";
 
-type LB = { i: number; title: string; link?: string; images?: string[]; terminal?: { title: string; lines: TermLine[] } };
+type LB = { i: number; title: string; desc?: string; link?: string; images?: string[]; terminal?: { title: string; lines: TermLine[] } };
 
 const NAV_LINKS = [
   { id: "projects", label: "Projects" },
@@ -127,7 +127,7 @@ export default function Home() {
 
   const openProject = (p: Project) => {
     if (p.terminal) setLb({ i: 0, title: p.name, terminal: p.terminal });
-    else if (p.images && p.images.length) setLb({ images: p.images, i: 0, title: p.name, link: p.link });
+    else if (p.images && p.images.length) setLb({ images: p.images, i: 0, title: p.name, desc: p.desc, link: p.link });
   };
   const closeLb = () => setLb(null);
   const stepLb = (d: number) => {
@@ -1140,6 +1140,11 @@ export default function Home() {
                 className="skilltile reveal"
                 key={name}
                 style={{ ["--b" as string]: color } as React.CSSProperties}
+                onMouseEnter={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+                  e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+                }}
                 onMouseMove={(e) => {
                   const r = e.currentTarget.getBoundingClientRect();
                   e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
@@ -1217,32 +1222,32 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <>
-              {(lb.images?.length ?? 0) > 1 && (
-                <button className="lb-arrow left" onClick={(e) => { e.stopPropagation(); stepLb(-1); }} aria-label="Previous">&#8249;</button>
-              )}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={lb.images![lb.i]}
-                alt={`${lb.title} screenshot ${lb.i + 1}`}
-                className={lb.link ? "clickable" : undefined}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (lb.link) window.open(lb.link, "_blank", "noreferrer");
-                }}
-              />
-              {(lb.images?.length ?? 0) > 1 && (
-                <button className="lb-arrow right" onClick={(e) => { e.stopPropagation(); stepLb(1); }} aria-label="Next">&#8250;</button>
-              )}
-              <div className="lb-dots">
-                {lb.images?.map((_, i) => <span key={i} className={`lb-dot${i === lb.i ? " active" : ""}`} />)}
+            <div className="lb-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="lb-carousel">
+                {(lb.images?.length ?? 0) > 1 && (
+                  <button className="lb-arrow left" onClick={(e) => { e.stopPropagation(); stepLb(-1); }} aria-label="Previous">&#8249;</button>
+                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={lb.images![lb.i]} alt={`${lb.title} screenshot ${lb.i + 1}`} />
+                {(lb.images?.length ?? 0) > 1 && (
+                  <button className="lb-arrow right" onClick={(e) => { e.stopPropagation(); stepLb(1); }} aria-label="Next">&#8250;</button>
+                )}
+                {(lb.images?.length ?? 0) > 1 && (
+                  <div className="lb-dots">
+                    {lb.images?.map((_, i) => <span key={i} className={`lb-dot${i === lb.i ? " active" : ""}`} />)}
+                  </div>
+                )}
               </div>
-            </>
-          )}
-          {lb.link && (
-            <a className="lb-link" href={lb.link} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
-              Visit live site &rarr;
-            </a>
+              <div className="lb-info">
+                <h3>{lb.title}</h3>
+                {lb.desc && <p>{lb.desc}</p>}
+                {lb.link && (
+                  <a className="btn solid" href={lb.link} target="_blank" rel="noreferrer">
+                    Visit live site &rarr;
+                  </a>
+                )}
+              </div>
+            </div>
           )}
         </div>
       )}

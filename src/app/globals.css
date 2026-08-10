@@ -157,10 +157,10 @@ button, input { font-family:inherit; color:inherit; }
 .tl p { color:var(--muted); font-size:15px; margin-top:9px; max-width:70ch; }
 
 /* skills grid */
-.skillgrid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; }
-.skilltile { position:relative; overflow:hidden; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:28px 14px; display:flex; flex-direction:column; align-items:center; gap:14px; transition:transform .15s ease-out, border-color .15s, box-shadow .15s; }
+.skillgrid { display:grid; grid-template-columns:repeat(6,1fr); gap:16px; }
+.skilltile { position:relative; overflow:hidden; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:28px 14px; display:flex; flex-direction:column; align-items:center; gap:14px; transition:transform .08s ease-out, border-color .08s, box-shadow .08s; }
 /* spotlight glow — pinned to this tile's own mouse position, so it can never light up a neighbor */
-.skilltile::before { content:""; position:absolute; inset:0; opacity:0; transition:opacity .2s; background:radial-gradient(140px circle at var(--mx,50%) var(--my,50%), var(--b), transparent 70%); pointer-events:none; }
+.skilltile::before { content:""; position:absolute; inset:0; opacity:0; transition:opacity .08s; background:radial-gradient(140px circle at var(--mx,50%) var(--my,50%), var(--b), transparent 70%); pointer-events:none; }
 .skilltile:hover { transform:translateY(-4px) scale(1.03); border-color:var(--b); box-shadow:0 12px 32px -16px var(--b); }
 .skilltile:hover::before { opacity:.18; }
 .skilltile .logo { position:relative; z-index:1; width:60px; height:60px; border-radius:15px; background:#fff; display:flex; align-items:center; justify-content:center; }
@@ -180,16 +180,24 @@ button, input { font-family:inherit; color:inherit; }
 
 /* lightbox */
 .lightbox { position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.86); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:40px; }
-.lightbox img { max-height:86vh; max-width:min(90vw,900px); border-radius:16px; box-shadow:0 30px 80px -20px #000; }
-.lightbox img.clickable { cursor:pointer; }
-.lb-close { position:absolute; top:20px; right:24px; font-size:26px; color:#fff; background:none; border:none; cursor:pointer; line-height:1; }
+.lb-close { position:absolute; top:20px; right:24px; font-size:26px; color:#fff; background:none; border:none; cursor:pointer; line-height:1; z-index:2; }
+.lb-panel { display:flex; width:min(92vw,1100px); height:min(85vh,680px); background:var(--card); border:1px solid var(--border2); border-radius:16px; overflow:hidden; box-shadow:0 30px 80px -20px #000; }
+.lb-carousel { position:relative; flex:0 0 70%; background:#0a0d14; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.lb-carousel img { max-width:100%; max-height:100%; object-fit:contain; }
+.lb-info { flex:0 0 30%; display:flex; flex-direction:column; padding:32px 28px; overflow-y:auto; border-left:1px solid var(--border); }
+.lb-info h3 { font-size:20px; font-weight:700; }
+.lb-info p { color:var(--muted); font-size:14px; line-height:1.65; margin-top:14px; flex:1; }
+.lb-info .btn { margin-top:22px; align-self:flex-start; }
 .lb-arrow { position:absolute; top:50%; transform:translateY(-50%); font-size:26px; color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); width:46px; height:46px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .lb-arrow.left { left:24px; } .lb-arrow.right { right:24px; }
-.lb-dots { position:absolute; bottom:28px; left:0; right:0; display:flex; gap:8px; justify-content:center; }
+.lb-dots { position:absolute; bottom:20px; left:0; right:0; display:flex; gap:8px; justify-content:center; }
 .lb-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.3); }
 .lb-dot.active { background:#fff; }
-.lb-link { position:absolute; bottom:28px; right:24px; color:#fff; font-size:13px; text-decoration:none; opacity:.8; }
-.lb-link:hover { opacity:1; text-decoration:underline; }
+@media (max-width:760px) {
+  .lb-panel { flex-direction:column; width:94vw; height:88vh; }
+  .lb-carousel { flex:1 1 60%; }
+  .lb-info { flex:0 0 auto; border-left:none; border-top:1px solid var(--border); }
+}
 
 /* command palette */
 .palette-overlay { position:fixed; inset:0; z-index:200; background:rgba(6,8,13,.7); backdrop-filter:blur(3px); display:flex; align-items:flex-start; justify-content:center; padding-top:14vh; opacity:0; pointer-events:none; transition:opacity .16s; }
