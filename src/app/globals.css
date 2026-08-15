@@ -198,6 +198,16 @@ button, input { font-family:inherit; color:inherit; }
   .lb-carousel { flex:1 1 60%; }
   .lb-info { flex:0 0 auto; border-left:none; border-top:1px solid var(--border); }
 }
+.lb-details { width:min(92vw,620px); max-height:85vh; overflow-y:auto; background:var(--card); border:1px solid var(--border2); border-radius:16px; padding:36px 32px; box-shadow:0 30px 80px -20px #000; }
+.lb-details h3 { font-size:22px; font-weight:700; }
+.lb-details .role { font-family:var(--mono); font-size:13px; color:var(--accent); margin-top:6px; }
+.lb-details .origin { font-family:var(--mono); font-size:12px; color:var(--accent2); margin-top:10px; }
+.lb-details p.desc { color:var(--muted); font-size:14px; line-height:1.65; margin-top:14px; }
+.lb-details .resp-label { font-family:var(--mono); font-size:11px; letter-spacing:.5px; color:var(--dim); text-transform:uppercase; margin-top:22px; }
+.lb-details ul.resp { margin-top:10px; padding-left:20px; color:var(--muted); font-size:14px; line-height:1.7; }
+.lb-details ul.resp li { margin-top:6px; }
+.lb-details ul.resp li::marker { color:var(--accent); }
+.lb-details .tags { margin-top:20px; }
 
 /* command palette */
 .palette-overlay { position:fixed; inset:0; z-index:200; background:rgba(6,8,13,.7); backdrop-filter:blur(3px); display:flex; align-items:flex-start; justify-content:center; padding-top:14vh; opacity:0; pointer-events:none; transition:opacity .16s; }

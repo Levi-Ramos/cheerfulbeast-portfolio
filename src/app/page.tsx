@@ -9,7 +9,18 @@ const GITHUB = "https://github.com/Levi-Ramos";
 const LINKEDIN = "https://www.linkedin.com/in/rowserowserowse/";
 const EMAIL = "leviramos59@gmail.com";
 
-type LB = { i: number; title: string; desc?: string; link?: string; images?: string[]; terminal?: { title: string; lines: TermLine[] } };
+type LB = {
+  i: number;
+  title: string;
+  desc?: string;
+  link?: string;
+  images?: string[];
+  terminal?: { title: string; lines: TermLine[] };
+  role?: string;
+  origin?: string;
+  responsibilities?: string[];
+  tags?: string[];
+};
 
 const NAV_LINKS = [
   { id: "projects", label: "Projects" },
@@ -128,6 +139,8 @@ export default function Home() {
   const openProject = (p: Project) => {
     if (p.terminal) setLb({ i: 0, title: p.name, terminal: p.terminal });
     else if (p.images && p.images.length) setLb({ images: p.images, i: 0, title: p.name, desc: p.desc, link: p.link });
+    else if (p.responsibilities?.length)
+      setLb({ i: 0, title: p.name, desc: p.desc, role: p.role, origin: p.origin, responsibilities: p.responsibilities, tags: p.tags, link: p.link });
   };
   const closeLb = () => setLb(null);
   const stepLb = (d: number) => {
@@ -1047,12 +1060,14 @@ export default function Home() {
           <div className="sec-head reveal"><span className="sec-num">01</span><span className="sec-title">Selected Projects</span><span className="sec-sub">tilt a card</span></div>
           <div className="projects">
             {projects.map((p, i) => {
-              const hasModal = !!(p.images?.length || p.terminal);
+              const hasModal = !!(p.images?.length || p.terminal || p.responsibilities?.length);
               const showThumbImage = !!p.images?.length;
               const overlay = p.images?.length
                 ? (p.imagesLabel ?? "View screenshots →")
                 : p.terminal
                 ? (p.imagesLabel ?? "View install →")
+                : p.responsibilities?.length
+                ? "View details →"
                 : p.link
                 ? "Visit live site →"
                 : null;
@@ -1067,7 +1082,10 @@ export default function Home() {
                         <div className="overlay">{overlay}</div>
                       </>
                     ) : p.locked ? (
-                      <Lock size={34} color={p.glyphColor} strokeWidth={1.5} />
+                      <>
+                        <Lock size={34} color={p.glyphColor} strokeWidth={1.5} />
+                        {overlay && <div className="overlay">{overlay}</div>}
+                      </>
                     ) : (
                       <>
                         <span className="glyph" style={{ color: p.glyphColor }}>{p.glyph}</span>
@@ -1222,7 +1240,7 @@ export default function Home() {
                 ))}
               </div>
             </div>
-          ) : (
+          ) : lb.images ? (
             <div className="lb-panel" onClick={(e) => e.stopPropagation()}>
               <div className="lb-carousel">
                 {(lb.images?.length ?? 0) > 1 && (
@@ -1248,6 +1266,24 @@ export default function Home() {
                   </a>
                 )}
               </div>
+            </div>
+          ) : (
+            <div className="lb-details" onClick={(e) => e.stopPropagation()}>
+              <h3>{lb.title}</h3>
+              {lb.role && <div className="role">{lb.role}</div>}
+              {lb.origin && <div className="origin">{lb.origin}</div>}
+              {lb.desc && <p className="desc">{lb.desc}</p>}
+              {!!lb.responsibilities?.length && (
+                <>
+                  <div className="resp-label">Responsibilities</div>
+                  <ul className="resp">
+                    {lb.responsibilities.map((r, i) => <li key={i}>{r}</li>)}
+                  </ul>
+                </>
+              )}
+              {!!lb.tags?.length && (
+                <div className="tags">{lb.tags.map((t) => <span className="tag" key={t}>{t}</span>)}</div>
+              )}
             </div>
           )}
         </div>

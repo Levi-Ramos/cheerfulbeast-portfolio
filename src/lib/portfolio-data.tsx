@@ -25,6 +25,10 @@ export type Project = {
   terminal?: { title: string; lines: TermLine[] };
   link?: string;
   locked?: boolean;
+  /** Built from scratch vs. joined an existing system — job-posting-style disclosure. */
+  origin?: string;
+  /** Specific tasks owned on this project, for cards with no live demo/screenshots to speak for themselves. */
+  responsibilities?: string[];
 };
 
 export const projects: Project[] = [
@@ -80,6 +84,13 @@ export const projects: Project[] = [
     glyphColor: "#4ade80",
     grad: "linear-gradient(135deg,#0f2318,#0a0d14)",
     locked: true,
+    origin: "Built from scratch — new app, replacing a legacy Delphi mobile client",
+    responsibilities: [
+      "Sole developer: own architecture, features, and delivery end to end",
+      "Building the Flutter/Dart app from the ground up with Bloc state management",
+      "Defining the API integration against the existing ERP backend",
+      "Set up the mobile CI/CD pipeline — GitHub Actions + Fastlane — plus Docker deploys for supporting services",
+    ],
   },
   {
     name: "ActiveWork",
@@ -91,6 +102,13 @@ export const projects: Project[] = [
     glyphColor: "#bb9af7",
     grad: "linear-gradient(135deg,#1a1630,#0a0d14)",
     locked: true,
+    origin: "Existing system — joined a live enterprise payroll/HRMS platform",
+    responsibilities: [
+      "Primary developer of the Blazor web client, end to end",
+      "Shipped features on the .NET backend (API endpoints, business logic)",
+      "Working on migrating the frontend from Blazor to Next.js/React",
+      "Schema and integration work against PostgreSQL, deployed via Docker",
+    ],
   },
   {
     name: "ServePOS",
@@ -102,6 +120,12 @@ export const projects: Project[] = [
     glyph: "POS",
     glyphColor: "#22d3ee",
     grad: "linear-gradient(135deg,#07231f,#0a0d14)",
+    origin: "Existing system — joined mid-build, now in client pilot",
+    responsibilities: [
+      "Built Flutter features (Bloc) for the BIR-compliant POS flow",
+      "Owned the mobile release pipeline: Fastlane automation to TestFlight",
+      "Supporting pilot rollout and client feedback fixes",
+    ],
   },
   {
     name: "Restaurant Ordering System",
