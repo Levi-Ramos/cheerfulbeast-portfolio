@@ -1144,6 +1144,14 @@ export default function Home() {
                   <div className="dt">{j.dates}</div>
                 </div>
                 <p>{j.desc}</p>
+                {!!j.highlights?.length && (
+                  <ul className="highlights">
+                    {j.highlights.map((h, i) => <li key={i}>{h}</li>)}
+                  </ul>
+                )}
+                {!!j.tags?.length && (
+                  <div className="tags">{j.tags.map((t) => <span className="tag" key={t}>{t}</span>)}</div>
+                )}
               </div>
             ))}
           </div>

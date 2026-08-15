@@ -138,32 +138,64 @@ export const projects: Project[] = [
   },
 ];
 
-export type Job = { role: string; company: string; dates: string; desc: string };
+export type Job = {
+  role: string;
+  company: string;
+  dates: string;
+  desc: string;
+  /** Specific tasks owned in this role — what the job-posting "responsibilities" line expects. */
+  highlights?: string[];
+  /** Technologies/frameworks used in this role. */
+  tags?: string[];
+};
 
 export const experience: Job[] = [
   {
     role: "Software Engineer (Full-Stack)",
     company: "ActiveSystems Software Inc.",
     dates: "Jan 2025 — Present",
-    desc: "Sole developer on a greenfield Flutter field-sales app replacing a legacy Delphi mobile app. Earlier, primary developer of a payroll/HRMS web client (Blazor/.NET), plus backend features and a Next.js migration. Set up mobile release pipelines and Docker deploys.",
+    desc: "Sole developer on a greenfield Flutter field-sales app replacing a legacy Delphi mobile app. Earlier, primary developer of a payroll/HRMS web client (Blazor/.NET), plus backend features and a Next.js migration.",
+    highlights: [
+      "ActiveOne Field Sales — sole developer building a Flutter field-sales app from scratch (Bloc) to replace a legacy Delphi mobile client",
+      "Set up the mobile CI/CD pipeline (GitHub Actions + Fastlane) and Docker deploys for supporting services",
+      "ActiveWork — primary developer of the Blazor web client on an existing payroll/HRMS platform; shipped .NET backend features and worked on the Next.js/React frontend migration",
+    ],
+    tags: ["Flutter", "Dart", "Bloc", "Blazor", ".NET", "Next.js", "PostgreSQL", "Docker", "GitHub Actions", "Fastlane"],
   },
   {
     role: "Full-Stack Developer",
     company: "Apollo Technologies, Inc.",
     dates: "Jul 2024 — Dec 2024",
-    desc: "Owned a Vue/Quasar reskin of a telecom billing system and built a Flutter mobile app (Bloc) for a client ISP. Improved a Spring Boot service; collaborated on a Flask API and a KillBill integration.",
+    desc: "Owned a Vue/Quasar reskin of a telecom billing system and built a Flutter mobile app (Bloc) for a client ISP.",
+    highlights: [
+      "Owned a Vue/Quasar reskin of an existing telecom billing system",
+      "Built a Flutter mobile app (Bloc) from scratch for a client ISP",
+      "Improved an existing Spring Boot service",
+      "Collaborated on a Flask API and a KillBill billing integration",
+    ],
+    tags: ["Vue", "Quasar", "Flutter", "Dart", "Bloc", "Spring Boot", "Flask", "KillBill"],
   },
   {
     role: "Full-Stack Developer Intern",
     company: "NHTS Dept., DSWD",
     dates: "Nov 2023 — Feb 2024",
-    desc: "Built a request-document management system for DSWD Region XI with SMS/email notifications and cloud storage, in Laravel — including deployment and QA.",
+    desc: "Built a request-document management system for DSWD Region XI, in Laravel — including deployment and QA.",
+    highlights: [
+      "Built a request-document management system from scratch in Laravel for DSWD Region XI",
+      "Added SMS/email notifications and cloud storage for uploaded documents",
+      "Owned deployment and QA for the release",
+    ],
+    tags: ["Laravel", "PHP"],
   },
   {
     role: "Back-End Developer Intern",
     company: "Next BPO Solutions, Inc.",
     dates: "Jul 2023 — Oct 2023",
     desc: "First industry role — built a back-end employee module with REST API endpoints for the company's internal system.",
+    highlights: [
+      "First industry role — built a back-end employee module with REST API endpoints",
+      "Worked within the company's existing internal system",
+    ],
   },
 ];
 

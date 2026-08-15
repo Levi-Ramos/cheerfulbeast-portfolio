@@ -155,6 +155,10 @@ button, input { font-family:inherit; color:inherit; }
 .tl .co { font-family:var(--mono); color:var(--accent); font-size:14px; margin-top:3px; }
 .tl .dt { font-family:var(--mono); color:var(--dim); font-size:13px; white-space:nowrap; }
 .tl p { color:var(--muted); font-size:15px; margin-top:9px; max-width:70ch; }
+.tl .highlights { margin-top:12px; padding-left:20px; color:var(--muted); font-size:14px; line-height:1.7; max-width:68ch; }
+.tl .highlights li { margin-top:6px; }
+.tl .highlights li::marker { color:var(--accent); }
+.tl .tags { margin-top:14px; }
 
 /* skills grid */
 .skillgrid { display:grid; grid-template-columns:repeat(6,1fr); gap:16px; }
