@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaGithub, FaLinkedinIn } from "react-icons/fa6";
-import { Lock, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, Search } from "lucide-react";
 import { projects, experience, skills, type Project, type TermLine } from "@/lib/portfolio-data";
 
 const GITHUB = "https://github.com/Levi-Ramos";
@@ -1252,12 +1252,12 @@ export default function Home() {
             <div className="lb-panel" onClick={(e) => e.stopPropagation()}>
               <div className="lb-carousel">
                 {(lb.images?.length ?? 0) > 1 && (
-                  <button className="lb-arrow left" onClick={(e) => { e.stopPropagation(); stepLb(-1); }} aria-label="Previous">&#8249;</button>
+                  <button className="lb-arrow left" onClick={(e) => { e.stopPropagation(); stepLb(-1); }} aria-label="Previous"><ChevronLeft size={22} /></button>
                 )}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={lb.images![lb.i]} alt={`${lb.title} screenshot ${lb.i + 1}`} />
                 {(lb.images?.length ?? 0) > 1 && (
-                  <button className="lb-arrow right" onClick={(e) => { e.stopPropagation(); stepLb(1); }} aria-label="Next">&#8250;</button>
+                  <button className="lb-arrow right" onClick={(e) => { e.stopPropagation(); stepLb(1); }} aria-label="Next"><ChevronRight size={22} /></button>
                 )}
                 {(lb.images?.length ?? 0) > 1 && (
                   <div className="lb-dots">

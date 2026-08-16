@@ -146,10 +146,11 @@ button, input { font-family:inherit; color:inherit; }
 .tag { font-family:var(--mono); font-size:11px; color:var(--muted); border:1px solid var(--border2); border-radius:999px; padding:3px 10px; }
 
 /* experience timeline */
-.tl { border-left:2px solid var(--border); margin-left:6px; padding-left:30px; }
+.tl { margin-left:6px; padding-left:30px; }
 .tl .item { position:relative; padding-bottom:34px; }
 .tl .item:last-child { padding-bottom:0; }
-.tl .item::before { content:""; position:absolute; left:-38px; top:5px; width:12px; height:12px; border-radius:50%; background:var(--bg); border:2px solid var(--accent); }
+.tl .item::before { content:""; position:absolute; left:-37px; top:5px; width:12px; height:12px; border-radius:50%; background:var(--bg); border:2px solid var(--accent); }
+.tl .item:not(:last-child)::after { content:""; position:absolute; left:-32px; top:17px; bottom:-5px; width:2px; background:var(--border); }
 .tl .top { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:baseline; }
 .tl .r { font-size:18px; font-weight:700; }
 .tl .co { font-family:var(--mono); color:var(--accent); font-size:14px; margin-top:3px; }
@@ -192,7 +193,7 @@ button, input { font-family:inherit; color:inherit; }
 .lb-info h3 { font-size:20px; font-weight:700; }
 .lb-info p { color:var(--muted); font-size:14px; line-height:1.65; margin-top:14px; flex:1; }
 .lb-info .btn { margin-top:22px; align-self:flex-start; }
-.lb-arrow { position:absolute; top:50%; transform:translateY(-50%); font-size:26px; color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); width:46px; height:46px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.lb-arrow { position:absolute; top:50%; transform:translateY(-50%); color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); width:46px; height:46px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .lb-arrow.left { left:24px; } .lb-arrow.right { right:24px; }
 .lb-dots { position:absolute; bottom:20px; left:0; right:0; display:flex; gap:8px; justify-content:center; }
 .lb-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.3); }
