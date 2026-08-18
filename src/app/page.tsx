@@ -451,19 +451,25 @@ export default function Home() {
       (entries) =>
         entries.forEach((e) => {
           if (e.isIntersecting) {
-            e.target.classList.add("in");
-            io.unobserve(e.target);
+            const el = e.target as HTMLElement;
+            el.classList.add("in");
+            io.unobserve(el);
+            // the stagger delay above is only for this reveal transition — clear it once
+            // it fires, so it doesn't keep throttling later hover/tilt transitions on el.
+            el.addEventListener("transitionend", () => { el.style.transitionDelay = ""; }, { once: true });
           }
         }),
       { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
     );
-    document
-      .querySelectorAll<HTMLElement>(".glance,.projects,.tl,.skillgrid,.hero-cta,.contact .row")
-      .forEach((group) => {
-        group.querySelectorAll<HTMLElement>(".reveal").forEach((el, i) => {
-          el.style.transitionDelay = `${i * 80}ms`;
+    if (!reducedRef.current) {
+      document
+        .querySelectorAll<HTMLElement>(".glance,.projects,.tl,.skillgrid,.hero-cta,.contact .row")
+        .forEach((group) => {
+          group.querySelectorAll<HTMLElement>(".reveal").forEach((el, i) => {
+            el.style.transitionDelay = `${i * 80}ms`;
+          });
         });
-      });
+    }
     document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, []);
