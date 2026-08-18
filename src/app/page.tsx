@@ -413,6 +413,7 @@ export default function Home() {
     { l: "Go to Experience", h: "section", a: () => document.querySelector("#experience")?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" }) },
     { l: "Go to Skills", h: "section", a: () => document.querySelector("#skills")?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" }) },
     { l: "Go to Contact", h: "section", a: () => document.querySelector("#contact")?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" }) },
+    { l: "View Resume", h: "↗", a: () => window.open("/resume.pdf", "_blank", "noopener") },
     { l: "Open GitHub", h: "↗", a: () => window.open(GITHUB, "_blank", "noopener") },
     { l: "Open LinkedIn", h: "↗", a: () => window.open(LINKEDIN, "_blank", "noopener") },
     { l: "Copy email address", h: EMAIL, a: () => navigator.clipboard?.writeText(EMAIL) },
@@ -1013,6 +1014,7 @@ export default function Home() {
               </p>
               <div className="hero-cta">
                 <a className="btn solid reveal clickable" href="#projects">View my projects</a>
+                <a className="btn reveal clickable" href="/resume.pdf" target="_blank" rel="noreferrer">View Resume</a>
                 <a className="btn reveal clickable" href={GITHUB} target="_blank" rel="noreferrer"><FaGithub /> GitHub</a>
                 <a className="btn reveal clickable" href={LINKEDIN} target="_blank" rel="noreferrer"><FaLinkedinIn /> LinkedIn</a>
               </div>
