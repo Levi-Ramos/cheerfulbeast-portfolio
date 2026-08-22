@@ -3,7 +3,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaGithub, FaLinkedinIn } from "react-icons/fa6";
 import { ChevronLeft, ChevronRight, Lock, Search } from "lucide-react";
-import { projects, experience, skillGroups, type Project, type TermLine } from "@/lib/portfolio-data";
+import {
+  projects, experience, skillGroups, LENSES, monthsIn, formatRange,
+  type Project, type TermLine, type Lens,
+} from "@/lib/portfolio-data";
 
 const GITHUB = "https://github.com/Levi-Ramos";
 const LINKEDIN = "https://www.linkedin.com/in/rowserowserowse/";
@@ -100,6 +103,8 @@ function renderGalaxyFrame(stars: { r: number; a0: number; spin: number }[], ang
   return grid.map((row) => row.join("")).join("\n");
 }
 
+const LONGEST_ROLE = Math.max(...experience.map((j) => monthsIn(j)));
+
 export default function Home() {
   const [lb, setLb] = useState<LB | null>(null);
   const [modKey, setModKey] = useState("⌘");
@@ -129,6 +134,7 @@ export default function Home() {
   const paletteInputRef = useRef<HTMLInputElement>(null);
   const projectRefs = useRef<(HTMLElement | null)[]>([]);
   const [projTab, setProjTab] = useState<"work" | "personal">("personal");
+  const [lens, setLens] = useState<Lens | "all">("all");
   const galaxyGateRef = useRef<HTMLPreElement>(null);
   const galaxyContactRef = useRef<HTMLPreElement>(null);
 
@@ -1168,25 +1174,94 @@ export default function Home() {
 
       <section id="experience" className="pf-section alt">
         <div className="pf-wrap">
-          <div className="sec-head reveal"><span className="sec-num">02</span><span className="sec-title">Experience</span></div>
-          <div className="tl">
-            {experience.map((j) => (
-              <div className="item reveal" key={j.company}>
-                <div className="top">
-                  <div><div className="r">{j.role}</div><div className="co">{j.company}</div></div>
-                  <div className="dt">{j.dates}</div>
-                </div>
-                <p>{j.desc}</p>
-                {!!j.highlights?.length && (
-                  <ul className="highlights">
-                    {j.highlights.map((h, i) => <li key={i}>{h}</li>)}
-                  </ul>
-                )}
-                {!!j.tags?.length && (
-                  <div className="tags">{j.tags.map((t) => <span className="tag" key={t}>{t}</span>)}</div>
-                )}
-              </div>
+          <div className="sec-head reveal"><span className="sec-num">02</span><span className="sec-title">Experience</span><span className="sec-sub">filter by stack</span></div>
+          <div className="exp-filter reveal">
+            <span className="ef-lbl">where I used</span>
+            <button
+              type="button"
+              className={`ef-chip clickable${lens === "all" ? " on" : ""}`}
+              aria-pressed={lens === "all"}
+              onClick={() => setLens("all")}
+            >
+              everything
+            </button>
+            {LENSES.map((l) => (
+              <button
+                key={l.key}
+                type="button"
+                className={`ef-chip clickable${lens === l.key ? " on" : ""}`}
+                aria-pressed={lens === l.key}
+                onClick={() => setLens(lens === l.key ? "all" : l.key)}
+              >
+                {l.label}
+              </button>
             ))}
+            {lens !== "all" && (() => {
+              // Counting the matches is the point of the filter — a lens that dims
+              // most of the page without saying how much it kept is just noise.
+              const hits = experience.reduce(
+                (n, j) => n + (j.highlights?.filter((h) => h.tech?.includes(lens)).length ?? 0), 0);
+              const roles = experience.filter(
+                (j) => j.highlights?.some((h) => h.tech?.includes(lens))).length;
+              const label = LENSES.find((l) => l.key === lens)?.label;
+              return (
+                <span className="ef-count" role="status">
+                  {label} — {roles} of {experience.length} roles · {hits} {hits === 1 ? "highlight" : "highlights"}
+                </span>
+              );
+            })()}
+          </div>
+          <div className="tl" data-filter={lens === "all" ? undefined : lens}>
+            {experience.map((j) => {
+              const months = monthsIn(j);
+              const matched = j.highlights?.filter((h) => h.tech?.includes(lens as Lens)).length ?? 0;
+              const lensTags = LENSES.find((l) => l.key === lens)?.tags ?? [];
+              return (
+                <div className={`item reveal${lens !== "all" && matched === 0 ? " dim" : ""}`} key={j.company}>
+                  <div className="when">
+                    <span className="range">{formatRange(j)}</span>
+                    <span className="dur" suppressHydrationWarning>
+                      {months} months{j.internship ? " · internship" : ""}
+                    </span>
+                    <span className="bar" style={{ width: `${Math.round((months / LONGEST_ROLE) * 100)}%` }} />
+                  </div>
+                  <div>
+                    <div className="r">
+                      {j.role}
+                      {!j.end && <span className="live"><i />current</span>}
+                    </div>
+                    <div className="co">
+                      {j.company}
+                      {!!j.products && <em> · {j.products} products</em>}
+                    </div>
+                    {!!j.highlights?.length && (
+                      <ul className="highlights">
+                        {j.highlights.map((h, i) => {
+                          const hit = lens !== "all" && !!h.tech?.includes(lens as Lens);
+                          return (
+                            <li key={i} className={lens === "all" ? undefined : hit ? "hit" : "dim"}>
+                              {h.lead && <b>{h.lead}</b>}{h.lead ? " " : ""}{h.text}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                    {!!j.tags?.length && (
+                      <div className="tags">
+                        {j.tags.map((t) => (
+                          <span
+                            className={`tag${lens === "all" ? "" : lensTags.includes(t) ? " hit" : " dim"}`}
+                            key={t}
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

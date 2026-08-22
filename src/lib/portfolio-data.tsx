@@ -158,63 +158,147 @@ export const projects: Project[] = [
   },
 ];
 
+/** The lenses the Experience filter offers. Each highlight declares which it belongs to. */
+export type Lens = "flutter" | "dotnet" | "web" | "backend" | "ops";
+
+export const LENSES: { key: Lens; label: string; tags: string[] }[] = [
+  { key: "flutter", label: "Flutter", tags: ["Flutter", "Dart", "Bloc"] },
+  { key: "dotnet", label: ".NET / Blazor", tags: ["Blazor", ".NET"] },
+  { key: "web", label: "Next.js / Vue", tags: ["Next.js", "Vue", "Quasar"] },
+  { key: "backend", label: "Laravel / APIs", tags: ["Laravel", "PHP", "Flask", "Spring Boot", "KillBill"] },
+  { key: "ops", label: "CI/CD", tags: ["Docker", "GitHub Actions", "Fastlane"] },
+];
+
+export type Highlight = {
+  /** Bolded opening phrase — the ownership claim, so it survives a skim. */
+  lead?: string;
+  text: string;
+  tech?: Lens[];
+};
+
 export type Job = {
   role: string;
   company: string;
-  dates: string;
+  /** YYYY-MM. Duration is computed from these, so "20 months" can't go stale. */
+  start: string;
+  /** YYYY-MM, omitted while the role is current. */
+  end?: string;
+  internship?: boolean;
+  /** Distinct products owned in this role, when it's more than one. */
+  products?: number;
+  /** One-line summary. Not rendered — the highlights carry the content; kept for reuse. */
   desc: string;
   /** Specific tasks owned in this role — what the job-posting "responsibilities" line expects. */
-  highlights?: string[];
+  highlights?: Highlight[];
   /** Technologies/frameworks used in this role. */
   tags?: string[];
 };
 
+const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function parse(ym: string) {
+  const [y, m] = ym.split("-").map(Number);
+  return { y, m: m - 1 };
+}
+
+/** Inclusive, the way LinkedIn counts: May–Aug 2023 is 4 months, not 3. */
+export function monthsIn(job: Job, now = new Date()) {
+  const a = parse(job.start);
+  const b = job.end ? parse(job.end) : { y: now.getFullYear(), m: now.getMonth() };
+  return (b.y - a.y) * 12 + (b.m - a.m) + 1;
+}
+
+/** "Jan 2025 — now", "Jul — Dec 2024" (year stated once), "Oct 2023 — Feb 2024". */
+export function formatRange(job: Job) {
+  const a = parse(job.start);
+  if (!job.end) return `${MONTH[a.m]} ${a.y} — now`;
+  const b = parse(job.end);
+  return a.y === b.y
+    ? `${MONTH[a.m]} — ${MONTH[b.m]} ${b.y}`
+    : `${MONTH[a.m]} ${a.y} — ${MONTH[b.m]} ${b.y}`;
+}
+
 export const experience: Job[] = [
   {
-    role: "Software Engineer (Full-Stack)",
+    role: "Software Engineer, Full-Stack",
     company: "ActiveSystems Software Inc.",
-    dates: "Jan 2025 — Present",
+    start: "2025-01",
+    products: 4,
     desc: "Sole developer on a greenfield Flutter field-sales app replacing a legacy Delphi mobile app. Earlier, primary developer of a payroll/HRMS web client (Blazor/.NET), plus backend features and a Next.js migration.",
     highlights: [
-      "ActiveOne Field Sales — sole developer building a Flutter field-sales app from scratch (Bloc) to replace a legacy Delphi mobile client",
-      "Set up the mobile CI/CD pipeline (GitHub Actions + Fastlane) and Docker deploys for supporting services",
-      "ActiveWork — primary developer of the Blazor web client on an existing payroll/HRMS platform; shipped .NET backend features and worked on the Next.js/React frontend migration",
+      {
+        lead: "Sole developer",
+        text: "on a greenfield Flutter field-sales app replacing a legacy Delphi client — architecture through release.",
+        tech: ["flutter"],
+      },
+      {
+        lead: "Primary developer",
+        text: "of the Blazor payroll/HRMS web client; shipped .NET backend features and the Next.js migration.",
+        tech: ["dotnet", "web"],
+      },
+      {
+        text: "Owns the mobile CI/CD pipeline — GitHub Actions, Fastlane, TestFlight — plus Docker deploys for supporting services.",
+        tech: ["ops"],
+      },
     ],
     tags: ["Flutter", "Dart", "Bloc", "Blazor", ".NET", "Next.js", "PostgreSQL", "Docker", "GitHub Actions", "Fastlane"],
   },
   {
     role: "Full-Stack Developer",
     company: "Apollo Technologies, Inc.",
-    dates: "Jul 2024 — Dec 2024",
+    start: "2024-07",
+    end: "2024-12",
     desc: "Owned a Vue/Quasar reskin of a telecom billing system and built a Flutter mobile app (Bloc) for a client ISP.",
     highlights: [
-      "Owned a Vue/Quasar reskin of an existing telecom billing system",
-      "Built a Flutter mobile app (Bloc) from scratch for a client ISP",
-      "Improved an existing Spring Boot service",
-      "Collaborated on a Flask API and a KillBill billing integration",
+      {
+        lead: "Owned",
+        text: "a Vue/Quasar reskin of a live telecom billing system.",
+        tech: ["web"],
+      },
+      {
+        text: "Built a Flutter loyalty/WiFi app from scratch for a client ISP, integrating a legacy provisioning system that returned scraped HTML.",
+        tech: ["flutter"],
+      },
+      {
+        text: "Collaborated on the Flask API layer and a KillBill subscription-billing integration.",
+        tech: ["backend"],
+      },
     ],
-    tags: ["Vue", "Quasar", "Flutter", "Dart", "Bloc", "Spring Boot", "Flask", "KillBill"],
+    tags: ["Vue", "Quasar", "Flutter", "Bloc", "Spring Boot", "Flask", "KillBill"],
   },
   {
     role: "Full-Stack Developer Intern",
     company: "NHTS Dept., DSWD",
-    dates: "Nov 2023 — Feb 2024",
+    start: "2023-10",
+    end: "2024-02",
+    internship: true,
     desc: "Built a request-document management system for DSWD Region XI, in Laravel — including deployment and QA.",
     highlights: [
-      "Built a request-document management system from scratch in Laravel for DSWD Region XI",
-      "Added SMS/email notifications and cloud storage for uploaded documents",
-      "Owned deployment and QA for the release",
+      {
+        lead: "Led the intern team",
+        text: "across front-end and back-end on a document-request system for DSWD Region XI, built from scratch in Laravel.",
+        tech: ["backend", "web"],
+      },
+      {
+        text: "Added SMS/email notifications and cloud storage for uploads; owned deployment and QA.",
+        tech: ["backend", "ops"],
+      },
     ],
     tags: ["Laravel", "PHP"],
   },
   {
     role: "Back-End Developer Intern",
     company: "Next BPO Solutions, Inc.",
-    dates: "Jul 2023 — Oct 2023",
+    start: "2023-05",
+    end: "2023-08",
+    internship: true,
     desc: "First industry role — built a back-end employee module with REST API endpoints for the company's internal system.",
     highlights: [
-      "First industry role — built a back-end employee module with REST API endpoints",
-      "Worked within the company's existing internal system",
+      {
+        lead: "Led the back-end",
+        text: "of the internship team in my first industry role — employee-module REST endpoints and ERD design.",
+        tech: ["backend"],
+      },
     ],
   },
 ];
