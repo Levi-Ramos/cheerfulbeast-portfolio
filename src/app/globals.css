@@ -128,11 +128,11 @@ button, input { font-family:inherit; color:inherit; }
 /* both panels stay mounted so reveal/tilt wiring survives the switch — the track just slides */
 .projtrack-clip { overflow:hidden; padding:8px 0 32px; margin-bottom:-32px; }
 .projtrack { display:grid; grid-template-columns:repeat(2,100%); align-items:start; transition:transform .5s cubic-bezier(.16,1,.3,1); }
-.projtrack[data-tab="personal"] { transform:translateX(-100%); }
+.projtrack[data-tab="work"] { transform:translateX(-100%); }
 /* the inactive panel keeps painting (it slides out) but stops setting the track height,
    so a short tab doesn't inherit the tall tab's dead space */
-.projtrack[data-tab="work"] > .projects:nth-child(2),
-.projtrack[data-tab="personal"] > .projects:nth-child(1) { height:0; overflow:visible; }
+.projtrack[data-tab="personal"] > .projects:nth-child(2),
+.projtrack[data-tab="work"] > .projects:nth-child(1) { height:0; overflow:visible; }
 @media (prefers-reduced-motion:reduce){ .projtrack{ transition:none; } }
 .projects { display:grid; grid-template-columns:1fr 1fr; gap:22px; align-content:start; perspective:1000px; }
 .proj { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; transform-style:preserve-3d; transition:transform .12s ease-out, border-color .2s, box-shadow .2s; }

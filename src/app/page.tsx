@@ -128,7 +128,7 @@ export default function Home() {
   const pagedotRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const paletteInputRef = useRef<HTMLInputElement>(null);
   const projectRefs = useRef<(HTMLElement | null)[]>([]);
-  const [projTab, setProjTab] = useState<"work" | "personal">("work");
+  const [projTab, setProjTab] = useState<"work" | "personal">("personal");
   const galaxyGateRef = useRef<HTMLPreElement>(null);
   const galaxyContactRef = useRef<HTMLPreElement>(null);
 
@@ -1145,7 +1145,7 @@ export default function Home() {
         <div className="pf-wrap">
           <div className="sec-head reveal"><span className="sec-num">01</span><span className="sec-title">Selected Projects</span><span className="sec-sub">tilt a card</span></div>
           <div className="projtabs reveal">
-            {([["work", "Work"], ["personal", "Personal"]] as const).map(([k, label]) => (
+            {([["personal", "Personal"], ["work", "Work"]] as const).map(([k, label]) => (
               <button
                 key={k}
                 type="button"
@@ -1159,8 +1159,8 @@ export default function Home() {
           </div>
           <div className="projtrack-clip">
             <div className="projtrack" data-tab={projTab}>
-              <div className="projects">{projects.map((p, i) => (p.kind === "work" ? renderProjectCard(p, i) : null))}</div>
               <div className="projects">{projects.map((p, i) => (p.kind === "personal" ? renderProjectCard(p, i) : null))}</div>
+              <div className="projects">{projects.map((p, i) => (p.kind === "work" ? renderProjectCard(p, i) : null))}</div>
             </div>
           </div>
         </div>
