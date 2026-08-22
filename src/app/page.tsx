@@ -41,31 +41,30 @@ const GATE_BOOT = [
   "mounting skills/         [ok]",
 ];
 
-type GateItem = { l: string; target: string | null; morph: boolean };
+type GateItem = { l: string; target: string | null; skipPrologue?: boolean };
 const GATE_ITEMS: GateItem[] = [
-  { l: "Enter portfolio", target: null, morph: true },
-  { l: "Jump to Projects", target: "#projects", morph: false },
-  { l: "Skip intro", target: null, morph: false },
+  { l: "Enter portfolio", target: null },
+  { l: "Jump to Projects", target: "#projects" },
+  { l: "Skip intro", target: null, skipPrologue: true },
 ];
 
-const HERO_BOOT: [string, "p" | "out"][] = [
-  ["guest@mark-ramos:~$ whoami", "p"],
-  ["Mark Levi Rowse M. Ramos · Full-stack Engineer", "out"],
-  ["guest@mark-ramos:~$ cat status.txt", "p"],
-  ["Shipping ActiveOne Field Sales solo · open to interesting problems", "out"],
-  ["guest@mark-ramos:~$ ls", "p"],
+/** Each act owns a slice of the prologue's scroll. Two of them hold sub-stages. */
+const ACT_WINDOWS: [number, number][] = [
+  [0.000, 0.075], // who
+  [0.075, 0.160], // what
+  [0.160, 0.580], // how       — six sub-stages
+  [0.580, 0.830], // the build — three sub-stages
+  [0.830, 0.920], // the stack
+  [0.920, 1.000], // resolve
 ];
-
-const HELP =
-  "Commands: help, whoami, ls, cat status.txt, open github, open linkedin, contact, sudo, matrix, cd .. (back to intro), clear";
+const ACT_LABELS = ["who", "what", "how", "built", "stack", "ready"];
+const LOOP_STAGES = ["spec", "plan", "review", "build", "verify", "ship"];
+const BUILD_STAGES = ["the room", "the round", "the reveal"];
+/** Fades are an absolute distance, not a fraction of the window: the "how" act is
+ *  0.42 wide, and a proportional fade there outlasts its own first sub-stage. */
+const EDGE = 0.04;
 
 const TRAIL_CHARS = ["0", "1", ".", "+", "*", "/", "\\", "<", ">", ":"];
-
-const SECTION_LINKS_HTML =
-  '<span class="term-link" data-t="#projects">projects/</span>  ' +
-  '<span class="term-link" data-t="#experience">experience/</span>  ' +
-  '<span class="term-link" data-t="#skills">skills/</span>  ' +
-  '<span class="term-link" data-t="#contact">contact/</span>';
 
 // rotating ascii galaxy — a fixed-size character grid so every animation frame renders
 // at the exact same width/height (no layout jitter), driven into a <pre> via ref + interval
@@ -115,10 +114,14 @@ export default function Home() {
   const [paletteActiveIdx, setPaletteActiveIdx] = useState(0);
 
   // DOM refs touched imperatively (continuous/high-frequency effects, or raw-HTML regions React doesn't own)
-  const heroTermRef = useRef<HTMLDivElement>(null);
-  const heroTermBarRef = useRef<HTMLDivElement>(null);
-  const heroBootRef = useRef<HTMLDivElement>(null);
-  const heroTermInputRef = useRef<HTMLInputElement>(null);
+  const prologueRef = useRef<HTMLElement>(null);
+  const navElRef = useRef<HTMLElement>(null);
+  const waveRef = useRef<HTMLSpanElement>(null);
+  const proRailRef = useRef<HTMLDivElement>(null);
+  const proFillRef = useRef<HTMLSpanElement>(null);
+  const proLabelRef = useRef<HTMLSpanElement>(null);
+  const skipRef = useRef<HTMLButtonElement>(null);
+  const paintRef = useRef<() => void>(() => {});
   const gateElRef = useRef<HTMLDivElement>(null);
   const gateTermRef = useRef<HTMLDivElement>(null);
   const gateBootRef = useRef<HTMLDivElement>(null);
@@ -140,7 +143,6 @@ export default function Home() {
 
   // mutable flags that shouldn't trigger re-renders
   const gateOpenRef = useRef(true);
-  const heroBootedRef = useRef(false);
   const reducedRef = useRef(false);
 
   const openProject = (p: Project) => {
@@ -300,49 +302,6 @@ export default function Home() {
     loop();
   }
 
-  // ---------- hero terminal boot + commands ----------
-  function runHeroBoot(i: number) {
-    const el = heroBootRef.current;
-    if (!el) return;
-    if (i >= HERO_BOOT.length) {
-      addLine(el, `${SECTION_LINKS_HTML}   <span class="out">(try 'help')</span>`, "out");
-      return;
-    }
-    typeLine(el, HERO_BOOT[i][0], HERO_BOOT[i][1], () => runHeroBoot(i + 1));
-  }
-  function startHeroBoot() {
-    if (heroBootedRef.current) return;
-    heroBootedRef.current = true;
-    runHeroBoot(0);
-  }
-  function runCommand(raw: string) {
-    const el = heroBootRef.current;
-    if (!el) return;
-    const cmd = raw.trim().toLowerCase();
-    addLine(el, `<span class="p">guest@mark-ramos:~$</span> ${raw}`, null);
-    if (!cmd) return;
-    if (cmd === "help") addLine(el, HELP, "out");
-    else if (cmd === "whoami") addLine(el, "Mark Levi Rowse M. Ramos · Full-stack Engineer", "out");
-    else if (cmd === "ls" || cmd === "ls projects") addLine(el, SECTION_LINKS_HTML, "out");
-    else if (cmd === "cat status.txt")
-      addLine(el, "Shipping ActiveOne Field Sales solo · open to interesting problems", "out");
-    else if (cmd === "open github") {
-      addLine(el, "opening github.com/Levi-Ramos…", "out");
-      window.open(GITHUB, "_blank", "noopener");
-    } else if (cmd === "open linkedin") {
-      addLine(el, "opening linkedin.com/in/rowserowserowse…", "out");
-      window.open(LINKEDIN, "_blank", "noopener");
-    } else if (cmd === "contact") addLine(el, `${EMAIL} — or just scroll, contact/ is at the bottom.`, "out");
-    else if (cmd === "sudo" || cmd.indexOf("sudo") === 0)
-      addLine(el, "Nice try. Access granted: you may now scroll.", "warn");
-    else if (cmd === "matrix") triggerMatrix();
-    else if (cmd === "cd .." || cmd === "back" || cmd === "exit") {
-      addLine(el, "returning to the main terminal ...", "out");
-      setTimeout(morphIntoGate, 250);
-    } else if (cmd === "clear") el.innerHTML = "";
-    else addLine(el, `command not found: ${cmd} — try 'help'`, "warn");
-  }
-
   // ---------- intro gate ----------
   function gBoot(i: number) {
     const el = gateBootRef.current;
@@ -370,7 +329,7 @@ export default function Home() {
     document.body.style.overflow = "hidden";
     gBoot(0);
   }
-  function gFade(target: string | null) {
+  function gFade(target: string | null, skipPrologue = false) {
     const gateEl = gateElRef.current, gateTermEl = gateTermRef.current;
     if (!gateEl || !gateTermEl) return;
     gateEl.classList.add("closing");
@@ -379,97 +338,10 @@ export default function Home() {
     setTimeout(() => {
       gateEl.style.display = "none";
       document.body.style.overflow = "";
-      startHeroBoot();
       if (target) document.querySelector(target)?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" });
+      else if (skipPrologue) window.scrollTo(0, prologueRef.current?.offsetHeight ?? 0);
+      paintRef.current();
     }, reducedRef.current ? 0 : 420);
-  }
-  function morphIntoHero() {
-    const gateEl = gateElRef.current, gateTermEl = gateTermRef.current;
-    if (!gateEl || !gateTermEl) return;
-    gateEl.classList.add("closing");
-    if (reducedRef.current) {
-      gateEl.style.display = "none";
-      document.body.style.overflow = "";
-      startHeroBoot();
-      return;
-    }
-    const heroTerm = heroTermRef.current;
-    if (!heroTerm) return;
-    const fromRect = gateTermEl.getBoundingClientRect();
-    const toRect = heroTerm.getBoundingClientRect();
-
-    gateTermEl.style.position = "fixed";
-    gateTermEl.style.left = `${fromRect.left}px`;
-    gateTermEl.style.top = `${fromRect.top}px`;
-    gateTermEl.style.right = "auto";
-    gateTermEl.style.bottom = "auto";
-    gateTermEl.style.width = `${fromRect.width}px`;
-    gateTermEl.style.height = `${fromRect.height}px`;
-    void gateTermEl.offsetHeight;
-
-    if (gateBootRef.current) {
-      gateBootRef.current.style.transition = "opacity .2s ease";
-      gateBootRef.current.style.opacity = "0";
-    }
-
-    requestAnimationFrame(() => {
-      const ease = "cubic-bezier(.16,1,.3,1)";
-      gateTermEl.style.transition = `left .68s ${ease}, top .68s ${ease}, width .68s ${ease}, height .68s ${ease}, border-radius .68s ease`;
-      gateTermEl.style.left = `${toRect.left}px`;
-      gateTermEl.style.top = `${toRect.top}px`;
-      gateTermEl.style.width = `${toRect.width}px`;
-      gateTermEl.style.height = `${toRect.height}px`;
-      gateTermEl.style.borderRadius = "14px";
-    });
-
-    setTimeout(() => {
-      gateEl.style.display = "none";
-      document.body.style.overflow = "";
-      startHeroBoot();
-    }, 700);
-  }
-  function morphIntoGate() {
-    const gateEl = gateElRef.current, gateTermEl = gateTermRef.current, heroTerm = heroTermRef.current;
-    if (!gateEl || !gateTermEl) return;
-    if (reducedRef.current || !heroTerm) {
-      reopenGate();
-      return;
-    }
-    resetGate();
-    window.scrollTo(0, 0);
-    gateEl.style.display = "";
-    gateOpenRef.current = true;
-    document.body.style.overflow = "hidden";
-
-    // FLIP, run in reverse: start pinned over the hero terminal's current rect...
-    const fromRect = heroTerm.getBoundingClientRect();
-    gateTermEl.style.animation = "none"; // don't let the built-in gate-in keyframe fight the FLIP
-    gateTermEl.style.position = "fixed";
-    gateTermEl.style.left = `${fromRect.left}px`;
-    gateTermEl.style.top = `${fromRect.top}px`;
-    gateTermEl.style.right = "auto";
-    gateTermEl.style.bottom = "auto";
-    gateTermEl.style.width = `${fromRect.width}px`;
-    gateTermEl.style.height = `${fromRect.height}px`;
-    gateTermEl.style.borderRadius = "14px";
-    void gateTermEl.offsetHeight;
-
-    // ...then grow to fill the gate (which is already fixed inset:0, so its own rect is the viewport)
-    const toRect = gateEl.getBoundingClientRect();
-    requestAnimationFrame(() => {
-      const ease = "cubic-bezier(.16,1,.3,1)";
-      gateTermEl.style.transition = `left .6s ${ease}, top .6s ${ease}, width .6s ${ease}, height .6s ${ease}, border-radius .6s ease`;
-      gateTermEl.style.left = `${toRect.left}px`;
-      gateTermEl.style.top = `${toRect.top}px`;
-      gateTermEl.style.width = `${toRect.width}px`;
-      gateTermEl.style.height = `${toRect.height}px`;
-      gateTermEl.style.borderRadius = "0px";
-    });
-
-    setTimeout(() => {
-      gateTermEl.style.cssText = "";
-      gBoot(0);
-    }, 640);
   }
   function gCommit(idx: number) {
     if (!gateOpenRef.current) return;
@@ -479,13 +351,8 @@ export default function Home() {
     } catch {}
     const item = GATE_ITEMS[idx];
     const el = gateBootRef.current;
-    if (item.morph) {
-      if (el) addLine(el, '<span class="out">&rarr; entering ...</span>', null);
-      setTimeout(morphIntoHero, 220);
-    } else {
-      if (el) addLine(el, '<span class="out">&rarr; loading portfolio ...</span>', null);
-      setTimeout(() => gFade(item.target), 220);
-    }
+    if (el) addLine(el, '<span class="out">&rarr; entering ...</span>', null);
+    setTimeout(() => gFade(item.target, item.skipPrologue), 220);
   }
   function gSkip() {
     if (!gateOpenRef.current) return;
@@ -493,7 +360,7 @@ export default function Home() {
     try {
       sessionStorage.setItem("gateSeen", "1");
     } catch {}
-    gFade(null);
+    gFade(null, true);
   }
 
   const PALETTE_ACTIONS = [
@@ -807,7 +674,7 @@ export default function Home() {
     }
 
     // parallax aurora
-    const heroEl = document.querySelector<HTMLElement>(".hero");
+    const heroEl = prologueRef.current;
     if (!reduced && heroEl && a1Ref.current && a2Ref.current) {
       const a1 = a1Ref.current, a2 = a2Ref.current;
       const mouse = { nx: 0, ny: 0 };
@@ -836,51 +703,6 @@ export default function Home() {
       window.addEventListener("scroll", onScroll, { passive: true });
       cleanups.push(() => window.removeEventListener("scroll", onScroll));
     }
-
-    // draggable hero terminal
-    const term = heroTermRef.current, bar = heroTermBarRef.current;
-    if (term && bar) {
-      let dragging = false, ox = 0, oy = 0, curX = 0, curY = 0;
-      const onDown = (e: PointerEvent) => {
-        dragging = true;
-        bar.setPointerCapture(e.pointerId);
-        ox = e.clientX - curX; oy = e.clientY - curY;
-        term.style.transition = "none";
-      };
-      const onDragMove = (e: PointerEvent) => {
-        if (!dragging) return;
-        curX = e.clientX - ox; curY = e.clientY - oy;
-        const max = 90;
-        curX = Math.max(-max, Math.min(max, curX));
-        curY = Math.max(-max, Math.min(max, curY));
-        term.style.left = `${curX}px`; term.style.top = `${curY}px`; term.style.position = "relative";
-      };
-      const onUp = (e: PointerEvent) => {
-        dragging = false;
-        bar.releasePointerCapture(e.pointerId);
-        term.style.transition = "";
-      };
-      bar.addEventListener("pointerdown", onDown);
-      bar.addEventListener("pointermove", onDragMove);
-      bar.addEventListener("pointerup", onUp);
-      cleanups.push(() => {
-        bar.removeEventListener("pointerdown", onDown);
-        bar.removeEventListener("pointermove", onDragMove);
-        bar.removeEventListener("pointerup", onUp);
-      });
-    }
-
-    // term-link click delegation (raw-HTML regions React doesn't own)
-    [heroBootRef.current, gateBootRef.current].forEach((container) => {
-      if (!container) return;
-      const onClick = (e: MouseEvent) => {
-        const link = (e.target as HTMLElement).closest<HTMLElement>(".term-link");
-        const sel = link?.dataset.t;
-        if (sel) document.querySelector(sel)?.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
-      };
-      container.addEventListener("click", onClick);
-      cleanups.push(() => container.removeEventListener("click", onClick));
-    });
 
     // tilt cards
     projectRefs.current.forEach((card) => {
@@ -988,12 +810,129 @@ export default function Home() {
     document.addEventListener("keydown", onPaletteShortcut);
     cleanups.push(() => document.removeEventListener("keydown", onPaletteShortcut));
 
-    // kick off: gate boot (if still open per the layout effect's decision) or hero boot directly
+    // kick off: gate boot, if the layout effect decided the gate is still open
     if (gateOpenRef.current) gBoot(0);
-    else startHeroBoot();
 
     return () => cleanups.forEach((fn) => fn());
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ---------- the prologue scrub ----------
+  // Six acts share one sticky viewport. Every bit of state is derived from scroll
+  // position, so scrolling back up replays the whole thing in reverse for free.
+  useEffect(() => {
+    const root = prologueRef.current;
+    const nav = navElRef.current;
+    if (!root) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      nav?.classList.remove("pro-hidden");
+      return;
+    }
+
+    const qsa = (sel: string) => Array.from(root.querySelectorAll<HTMLElement>(sel));
+    const beats = qsa(".beat");
+    const acts = [
+      { beat: 2, steps: qsa("#loopStage .pstep"), rail: qsa("#loopRail .rail-step"), labels: LOOP_STAGES, at: 0 },
+      { beat: 3, steps: qsa("#buildStage .pstep"), rail: qsa("#buildRail .rail-step"), labels: BUILD_STAGES, at: 0 },
+    ];
+
+    const ramp = (p: number, a: number, b: number) => {
+      if (p <= a || p >= b) return 0;
+      if (p < a + EDGE) return (p - a) / EDGE;
+      if (p > b - EDGE) return (b - p) / EDGE;
+      return 1;
+    };
+
+    // The hand waves once per arrival, and never behind the gate.
+    let waving = false;
+    const setWave = (on: boolean) => {
+      const el = waveRef.current;
+      if (!el || on === waving || gateOpenRef.current) return;
+      waving = on;
+      if (!on) {
+        el.classList.remove("go");
+        return;
+      }
+      el.classList.remove("go");
+      void el.offsetWidth; // restart the animation
+      el.classList.add("go");
+    };
+
+    const paint = () => {
+      const travel = root.offsetHeight - window.innerHeight;
+      const p = travel > 0 ? Math.min(1, Math.max(0, window.scrollY / travel)) : 1;
+
+      beats.forEach((el, i) => {
+        const w = ACT_WINDOWS[i];
+        let o: number;
+        if (i === 0) {
+          // Already on screen when the gate leaves, so no fade-in — otherwise the
+          // visitor lands on a near-blank page and never learns to scroll.
+          o = 1 - Math.min(1, Math.max(0, (p - (w[1] - EDGE)) / EDGE));
+          setWave(o > 0.85);
+        } else if (i === beats.length - 1) {
+          o = Math.min(1, Math.max(0, (p - w[0]) / 0.05)); // the hero arrives and stays
+        } else {
+          o = ramp(p, w[0] - 0.02, w[1] + 0.02);
+        }
+        el.style.opacity = String(o);
+        el.style.transform = `translateY(${(1 - o) * 26}px)`;
+        el.style.pointerEvents = o > 0.6 ? "auto" : "none";
+      });
+
+      // Sub-stages only advance once their beat has settled, so nothing swaps
+      // underneath a fade.
+      acts.forEach((act) => {
+        const w = ACT_WINDOWS[act.beat];
+        const s0 = w[0] + EDGE + 0.015;
+        const s1 = w[1] - EDGE;
+        const inner = Math.min(1, Math.max(0, (p - s0) / (s1 - s0)));
+        act.at = Math.min(act.steps.length - 1, Math.floor(inner * act.steps.length));
+        act.steps.forEach((el, i) => el.classList.toggle("on", i === act.at));
+        act.rail.forEach((el, i) => {
+          el.classList.toggle("on", i === act.at);
+          el.classList.toggle("done", i < act.at);
+        });
+      });
+
+      nav?.classList.toggle("pro-hidden", p < 0.905);
+      proRailRef.current?.classList.toggle("in", p < 0.99);
+      skipRef.current?.classList.toggle("in", p < 0.93);
+      if (proFillRef.current) proFillRef.current.style.width = `${(p * 100).toFixed(1)}%`;
+
+      const label = proLabelRef.current;
+      if (label) {
+        const bi = ACT_WINDOWS.findIndex((w) => p >= w[0] && p < w[1]);
+        const act = acts.find((a) => a.beat === bi);
+        if (p < 0.04) {
+          label.className = "cue";
+          label.innerHTML = 'scroll <i>&darr;</i>';
+        } else {
+          label.className = "";
+          label.textContent = act
+            ? `${ACT_LABELS[bi]} · ${act.labels[act.at]}`
+            : ACT_LABELS[bi < 0 ? ACT_LABELS.length - 1 : bi];
+        }
+      }
+    };
+
+    paintRef.current = paint;
+    let queued = false;
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        paint();
+        queued = false;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", paint);
+    paint();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", paint);
+    };
   }, []);
 
   return (
@@ -1057,7 +996,7 @@ export default function Home() {
         </button>
       </div>
 
-      <nav className="pf-nav">
+      <nav className="pf-nav pro-hidden" ref={navElRef}>
         <div className="inner">
           <a className="pf-brand" href="#top">mark<span>.</span>ramos<span className="blinkcaret">_</span></a>
           <div className="pf-navlinks" ref={navlinksElRef}>
@@ -1083,69 +1022,302 @@ export default function Home() {
         </div>
       </nav>
 
-      <header className="hero" id="top">
-        <div className="aurora a1" ref={a1Ref} />
-        <div className="aurora a2" ref={a2Ref} />
-        <div className="pf-wrap">
-          <div className="hero-grid">
-            <div className="hero-copy">
-              <div className="kicker reveal"><span className="pulse" />FULL-STACK ENGINEER · MOBILE + WEB · DAVAO CITY, PH</div>
-              <h1 className="reveal">Mark Levi Rowse<br /><span className="grad">M. Ramos</span></h1>
-              <p className="tagline reveal">
-                Full-stack software engineer who takes products from a rough spec all the way to release —
-                across Flutter, .NET, and modern web. Comfortable in unfamiliar stacks and the parts most
-                people skip.
-              </p>
-              <div className="hero-cta">
-                <a className="btn solid reveal clickable" href="#projects">View my projects</a>
-                <a className="btn reveal clickable" href="/resume.pdf" target="_blank" rel="noreferrer">View Resume</a>
-                <a className="btn reveal clickable" href={GITHUB} target="_blank" rel="noreferrer"><FaGithub /> GitHub</a>
-                <a className="btn reveal clickable" href={LINKEDIN} target="_blank" rel="noreferrer"><FaLinkedinIn /> LinkedIn</a>
-              </div>
+      {/* The prologue: six acts in one sticky viewport, scrubbed by scroll.
+          Scrolling back up replays it, because every value is derived from position. */}
+      <header className="prologue" id="top" ref={prologueRef}>
+        <div className="pstage">
+          <div className="aurora a1" ref={a1Ref} />
+          <div className="aurora a2" ref={a2Ref} />
+
+          {/* 01 — who */}
+          <div className="beat" data-beat="0">
+            <h1>
+              Hi, I&apos;m <span className="grad">Levi</span>.{" "}
+              <span className="wave" ref={waveRef} aria-hidden="true">&#128075;</span>
+            </h1>
+            <p className="beat-p">Software engineer. Mobile and web. Davao City, Philippines.</p>
+          </div>
+
+          {/* 02 — what */}
+          <div className="beat" data-beat="1">
+            <div className="beat-meta">what I do</div>
+            <h1>I build for mobile<br />and web, end to end.</h1>
+            <div className="beat-list">
+              <span>mobile apps</span><span>web clients</span><span>APIs</span>
+              <span>databases</span><span>release pipelines</span>
+            </div>
+            <p className="beat-p">
+              Three years, four teams &mdash; most of that time inside systems that were already running.
+            </p>
+          </div>
+
+          {/* 03 — how: the six-stage loop, one stage at a time */}
+          <div className="beat" data-beat="2">
+            <div className="beat-meta">how I work</div>
+            <div className="prail" id="loopRail">
+              <div className="rail-step"><b>01</b>spec</div>
+              <div className="rail-step"><b>02</b>plan</div>
+              <div className="rail-step"><b>03</b>review</div>
+              <div className="rail-step"><b>04</b>build</div>
+              <div className="rail-step"><b>05</b>verify</div>
+              <div className="rail-step"><b>06</b>ship</div>
             </div>
 
-            <div
-              className="terminal reveal"
-              ref={heroTermRef}
-              style={{ transitionDelay: "120ms" }}
-              onClick={() => {
-                if (window.getSelection()?.toString()) return; // don't yank focus mid text-selection
-                heroTermInputRef.current?.focus();
-              }}
-            >
-              <div className="term-bar" ref={heroTermBarRef}>
-                <span className="dot r" /><span className="dot y" /><span className="dot g" />
-                <span className="term-title">guest@mark-ramos: ~</span>
+            <div className="pstage-inner" id="loopStage">
+              <div className="pstep">
+                <div>
+                  <div className="who">human authored</div>
+                  <h2>I write the spec first.</h2>
+                  <p>What changes, what stays, what done means. An agent handed one sentence will build the wrong thing, quickly.</p>
+                </div>
+                <div className="art">
+                  <div className="cap">/spec &mdash; scroll-snap fights the user</div>
+                  <div className="l"><span className="g">&rsaquo;</span><span>problem: snap <b>captures</b> the scroll instead of assisting it</span></div>
+                  <div className="l"><span className="g">&rsaquo;</span><span>done means: a flick lands where it was aimed</span></div>
+                  <div className="l"><span className="g">&rsaquo;</span><span>out of scope: section order, reveal timing</span></div>
+                </div>
               </div>
-              <div className="term-body" ref={heroBootRef} />
-              <div className="term-inputline">
-                <span className="prompt">guest@mark-ramos:~$</span>
-                <input
-                  ref={heroTermInputRef}
-                  className="term-input clickable"
-                  autoComplete="off"
-                  spellCheck={false}
-                  aria-label="Terminal command input"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.currentTarget.value.trim() !== "") {
-                      runCommand(e.currentTarget.value);
-                      e.currentTarget.value = "";
-                    }
-                  }}
-                />
-                <span className="term-caret" />
+
+              <div className="pstep">
+                <div>
+                  <div className="who">agent proposal</div>
+                  <h2>Then the plan, before any code.</h2>
+                  <p>Which files, in what order, and the smallest change that satisfies the spec. I read a plan, not four hundred lines I have to reverse-engineer.</p>
+                </div>
+                <div className="art">
+                  <div className="cap">implementation plan</div>
+                  <div className="l"><span className="g">1</span><span>globals.css:14 &mdash; <b>one declaration</b></span></div>
+                  <div className="l"><span className="g">2</span><span>no new dependency, no new state</span></div>
+                  <div className="l"><span className="g">3</span><span>check at 390&times;844 before ship</span></div>
+                </div>
+              </div>
+
+              <div className="pstep">
+                <div>
+                  <div className="who">human gate &middot; pre-build</div>
+                  <h2>The plan gets reviewed.</h2>
+                  <p>Scope creep, missing cases, cheaper options &mdash; caught while the change is still a paragraph. Rejecting a plan costs minutes. Rejecting a branch costs a day.</p>
+                </div>
+                <div className="art">
+                  <div className="cap">/plan-eng-review</div>
+                  <div className="l"><span className="ok">&#10003;</span><span>scope matches the spec</span></div>
+                  <div className="l"><span className="no">!</span><span>proximity still snaps on desktop &mdash; <b>intended?</b> confirmed yes</span></div>
+                  <div className="l"><span className="ok">&#10003;</span><span>approved &mdash; one line, reversible</span></div>
+                </div>
+              </div>
+
+              <div className="pstep">
+                <div>
+                  <div className="who">agent execution &middot; constrained</div>
+                  <h2>The smallest thing that works.</h2>
+                  <p>Standard library before custom code, native before a dependency, one line before fifty. Shortcuts I take on purpose get written down instead of forgotten.</p>
+                </div>
+                <div className="art">
+                  <div className="cap">diff</div>
+                  <div className="l"><span className="no">&minus;</span><span><span className="del">scroll-snap-type: y mandatory</span></span></div>
+                  <div className="l"><span className="ok">+</span><span>scroll-snap-type: y proximity</span></div>
+                  <div className="l"><span className="g">&middot;</span><span className="g">skipped: a JS scroll controller. add when CSS proves insufficient.</span></div>
+                </div>
+              </div>
+
+              <div className="pstep">
+                <div>
+                  <div className="who">human gate &middot; pre-ship</div>
+                  <h2>Nothing ships on the agent&apos;s word.</h2>
+                  <p>I measure it &mdash; on a device for mobile, at a real viewport for web. Numbers, not vibes, and it catches what reading a diff can&apos;t see.</p>
+                </div>
+                <div className="art">
+                  <div className="cap">measured &mdash; real defects, this site</div>
+                  <div className="l"><span className="no">!</span><span>animation delay <span className="del">1760ms</span> &rarr; <span className="num">275ms</span></span></div>
+                  <div className="l"><span className="no">!</span><span>section column <span className="del">858px</span> &rarr; <span className="num">1232px</span></span></div>
+                  <div className="l"><span className="no">!</span><span>text contrast <span className="del">3.2:1</span> &rarr; <span className="num">6.9:1</span></span></div>
+                  <div className="l"><span className="no">!</span><span>duration read <span className="del">19 months</span> &rarr; <span className="num">20</span></span></div>
+                </div>
+              </div>
+
+              <div className="pstep">
+                <div>
+                  <div className="who">human decision</div>
+                  <h2>Then it ships, with a commit that says why.</h2>
+                  <p>Tests, diff review, deploy. If something was left out, the commit says that too &mdash; a record you can&apos;t trust is worth nothing.</p>
+                </div>
+                <div className="art">
+                  <div className="cap">/ship</div>
+                  <div className="l"><span className="ok">&#10003;</span><span>lint, types, build clean</span></div>
+                  <div className="l"><span className="g">&middot;</span><span><b>34505b1</b> Relax scroll-snap from mandatory to proximity</span></div>
+                  <div className="l"><span className="ok">&#10003;</span><span>deployed, verified live</span></div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="glance">
-            <div className="stat reveal"><div className="big">~2 yrs</div><div className="lbl">building &amp; shipping in production</div></div>
-            <div className="stat reveal"><div className="big">Mobile + Web</div><div className="lbl">full-stack across platforms</div></div>
-            <div className="stat reveal"><div className="big mono">CI/CD</div><div className="lbl">owns mobile releases &amp; deploys</div></div>
-            <div className="stat reveal"><div className="big mono">AI-assisted</div><div className="lbl">spec-driven dev workflow</div></div>
+          {/* 04 — the build: one project, walked */}
+          <div className="beat" data-beat="3">
+            <div className="beat-meta">
+              the one I&apos;d want you to open &middot;{" "}
+              <a href="https://code-party-dusky.vercel.app" target="_blank" rel="noreferrer">code-party-dusky.vercel.app</a>
+              {" \u00b7 "}
+              <a href="https://code-party-dusky.vercel.app/room/DEMO" target="_blank" rel="noreferrer">or watch the 80s demo</a>
+            </div>
+            <div className="prail r3" id="buildRail">
+              <div className="rail-step"><b>01</b>the room</div>
+              <div className="rail-step"><b>02</b>the round</div>
+              <div className="rail-step"><b>03</b>the reveal</div>
+            </div>
+
+            <div className="pstage-inner tall" id="buildStage">
+              <div className="pstep shot-step">
+                <div>
+                  <div className="who">code party &middot; <span className="live-pill">playable, no signup</span></div>
+                  <h2>2&ndash;10 players, one room, one clock.</h2>
+                  <p>A four-character code and a display name. Three game modes share the same room, lobby, timer and reconnect skeleton &mdash; mode is a setting, not a separate app.</p>
+                  <div className="art">
+                    <div className="cap">hard part &mdash; the server owns every timer</div>
+                    <div className="l"><span className="no">!</span><span>a skewed clock or a paused tab must not <b>buy time</b></span></div>
+                    <div className="l"><span className="ok">&rarr;</span><span>the server broadcasts <b>phase_changed &#123; deadline &#125;</b>; clients only render a countdown to it</span></div>
+                    <div className="l"><span className="ok">&rarr;</span><span>a deadline is a ceiling, not a schedule &mdash; the last submission ends the phase early</span></div>
+                  </div>
+                </div>
+                <figure className="shot zoom">
+                  <div className="term-bar">
+                    <span className="dot r" /><span className="dot y" /><span className="dot g" />
+                    <span className="term-title">code-party-dusky.vercel.app/room/5454</span>
+                  </div>
+                  <div className="frame">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/cp-lobby.png" alt="Code Party lobby: room code, player list, and the three game modes" />
+                  </div>
+                </figure>
+              </div>
+
+              <div className="pstep shot-step">
+                <div>
+                  <div className="who">mode 01 &middot; ui speedbuild</div>
+                  <h2>Write it, watch it render.</h2>
+                  <p>A live HTML/CSS/JS editor beside a preview that updates as you type, against a prompt and a countdown.</p>
+                  <div className="art">
+                    <div className="cap">hard part &mdash; running a stranger&apos;s code</div>
+                    <div className="l"><span className="ok">&rarr;</span><span><b>iframe sandbox srcdoc</b> &mdash; untrusted player code never reaches a server at all</span></div>
+                    <div className="l"><span className="no">!</span><span>30s isn&apos;t enough to hand-write centering and card chrome</span></div>
+                    <div className="l"><span className="ok">&rarr;</span><span>a small preset sheet covers <b>structure only</b> &mdash; styling everything makes every entry converge and drains the vote of signal</span></div>
+                  </div>
+                </div>
+                <figure className="shot">
+                  <div className="term-bar">
+                    <span className="dot r" /><span className="dot y" /><span className="dot g" />
+                    <span className="term-title">round 1/3 &mdash; 00:58 left</span>
+                  </div>
+                  <div className="frame">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/cp-round.png" alt="A round in progress: prompt, countdown, editor, live preview and the preset class reference" />
+                  </div>
+                </figure>
+              </div>
+
+              <div className="pstep shot-step">
+                <div>
+                  <div className="who">three modes, three judges</div>
+                  <h2>Everyone&apos;s revealed at once.</h2>
+                  <p>Peer vote for UI Speedbuild. An LLM rubric for System Design. Real test runs for Coding Challenge &mdash; pick Python, JS, Java or Go and your code is compiled and run.</p>
+                  <div className="art">
+                    <div className="cap">hard part &mdash; judging that repeats</div>
+                    <div className="l"><span className="no">!</span><span>&ldquo;is this good?&rdquo; answers differently every time you ask</span></div>
+                    <div className="l"><span className="ok">&rarr;</span><span>Gemini, structured JSON, <b>temp 0</b>, fixed criteria &mdash; repeatable scoring, not creative grading</span></div>
+                    <div className="l"><span className="ok">&rarr;</span><span>one harness covers four languages: the arguments are baked in as <b>language literals</b>, so nothing parses JSON at runtime</span></div>
+                    <div className="l opt"><span className="g">&middot;</span><span className="g">submissions are blanked from room state until reveal &mdash; &ldquo;3/4 submitted&rdquo; is a broadcast, and it must not carry anyone&apos;s code</span></div>
+                  </div>
+                </div>
+                <figure className="shot z13">
+                  <div className="term-bar">
+                    <span className="dot r" /><span className="dot y" /><span className="dot g" />
+                    <span className="term-title">code-party-dusky.vercel.app/room/DEMO</span>
+                  </div>
+                  <div className="frame">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/cp-reveal.png" alt="The voting grid: four players&apos; pricing-card submissions side by side, with the vote timer" />
+                  </div>
+                </figure>
+              </div>
+            </div>
+          </div>
+
+          {/* 05 — the stack, cut down to what is actually current */}
+          <div className="beat" data-beat="4">
+            <div className="beat-meta">what I work with, most weeks</div>
+            <h1>The current stack.</h1>
+            <div className="stackrows">
+              <div className="srow">
+                <span className="sl">mobile</span>
+                <span className="st">Flutter &middot; Dart &middot; Bloc</span>
+                <span className="se">ActiveOne &middot; ServePOS</span>
+              </div>
+              <div className="srow">
+                <span className="sl">web</span>
+                <span className="st">Next.js &middot; React &middot; TypeScript</span>
+                <span className="se">this site &middot; Groundtruth &middot; Code Party</span>
+              </div>
+              <div className="srow">
+                <span className="sl">server</span>
+                <span className="st">TypeScript on Node <em>&middot;</em> .NET / C#</span>
+                <span className="se">route handlers &middot; Workers &middot; Express</span>
+              </div>
+              <div className="srow">
+                <span className="sl">data</span>
+                <span className="st">PostgreSQL &middot; Drizzle</span>
+                <span className="se">Neon &middot; Supabase &middot; work Postgres</span>
+              </div>
+              <div className="srow">
+                <span className="sl">ai</span>
+                <span className="st">Gemini &middot; Vercel AI SDK</span>
+                <span className="se">Groundtruth &middot; Code Party</span>
+              </div>
+              <div className="srow">
+                <span className="sl">ship</span>
+                <span className="st">Docker &middot; GitHub Actions &middot; Fastlane</span>
+                <span className="se">mobile CI/CD &middot; TestFlight</span>
+              </div>
+            </div>
+            <p className="stacknote">
+              Laravel, Spring Boot and Flask are on my r&eacute;sum&eacute; and I can still work in them &mdash;
+              I just haven&apos;t in two years. The complete list is in Skills, below.
+            </p>
+          </div>
+
+          {/* 06 — resolve into the hero the rest of the page expects */}
+          <div className="beat hero-resolve" data-beat="5">
+            <div className="kicker"><span className="pulse" />FULL-STACK ENGINEER &middot; MOBILE + WEB &middot; DAVAO CITY, PH</div>
+            <h1>Mark Levi Rowse<br /><span className="grad">M. Ramos</span></h1>
+            <p className="tagline">
+              I take products from a rough spec to something running in production &mdash; mobile and web,
+              with the release pipeline that ships it.
+            </p>
+            <div className="hero-cta">
+              <a className="btn solid clickable" href="#projects">View my projects</a>
+              <a className="btn clickable" href="/resume.pdf" target="_blank" rel="noreferrer">View Resume</a>
+              <a className="btn clickable" href={GITHUB} target="_blank" rel="noreferrer"><FaGithub /> GitHub</a>
+              <a className="btn clickable" href={LINKEDIN} target="_blank" rel="noreferrer"><FaLinkedinIn /> LinkedIn</a>
+            </div>
           </div>
         </div>
       </header>
+
+      <div className="pro-rail" ref={proRailRef} aria-hidden="true">
+        <span ref={proLabelRef} />
+        <div className="pro-bar"><span ref={proFillRef} /></div>
+      </div>
+      <button
+        className="skip-pro clickable"
+        type="button"
+        ref={skipRef}
+        onClick={() =>
+          window.scrollTo({
+            top: prologueRef.current?.offsetHeight ?? 0,
+            behavior: reducedRef.current ? "auto" : "smooth",
+          })
+        }
+      >
+        skip to work &darr;
+      </button>
 
       <section id="projects" className="pf-section">
         <div className="pf-wrap">
