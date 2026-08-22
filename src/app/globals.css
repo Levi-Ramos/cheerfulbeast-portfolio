@@ -11,6 +11,8 @@
   --dim2:#7a8698;
   --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,"Cascadia Code",Consolas,monospace;
   --ease:cubic-bezier(.16,1,.3,1);
+  /* the nav is sticky, so it occupies layout; the prologue pulls back over it */
+  --nav-h:61px;
 }
 
 * { box-sizing:border-box; }
@@ -55,7 +57,7 @@ button, input { font-family:inherit; color:inherit; }
 
 /* nav */
 .pf-nav { position:sticky; top:0; z-index:20; backdrop-filter:blur(10px); background:rgba(10,13,20,.72); border-bottom:1px solid var(--border); }
-.pf-nav .inner { max-width:1320px; margin:0 auto; padding:0 44px; display:flex; align-items:center; justify-content:space-between; height:60px; gap:18px; }
+.pf-nav .inner { max-width:1320px; margin:0 auto; padding:0 44px; display:flex; align-items:center; justify-content:space-between; height:calc(var(--nav-h) - 1px); gap:18px; }
 .pf-brand { font-family:var(--mono); font-weight:600; font-size:15px; }
 .pf-brand span { color:var(--accent); }
 .blinkcaret { animation:blink 1.1s step-end infinite; }
@@ -109,7 +111,7 @@ button, input { font-family:inherit; color:inherit; }
 
 
 /* ===== prologue: six acts share one sticky viewport, scrubbed by scroll ===== */
-.prologue { position:relative; height:960vh; }
+.prologue { position:relative; height:960vh; margin-top:calc(-1 * var(--nav-h)); }
 .pstage { position:sticky; top:0; height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; }
 .beat { position:absolute; width:min(1320px,100%); padding:0 44px; z-index:1; will-change:opacity,transform; }
 .beat h1 { font-size:clamp(38px,7vw,86px); font-weight:800; letter-spacing:-.035em; line-height:1.02; margin:0; text-wrap:balance; }
@@ -276,7 +278,7 @@ button, input { font-family:inherit; color:inherit; }
 .tl .tags { margin-top:14px; }
 .tl .tag { transition:opacity .22s cubic-bezier(.16,1,.3,1), color .16s, border-color .16s; }
 /* filtered: dim what the lens excludes, mark what it keeps */
-.tl[data-filter] .item.dim > * { opacity:.42; }
+.tl[data-filter] .item[data-dim] > * { opacity:.42; }
 .tl[data-filter] .highlights li.dim { opacity:.45; }
 .tl[data-filter] .highlights li.hit::before { content:"\25b8"; color:var(--accent); }
 .tl[data-filter] .tag.dim { opacity:.4; }

@@ -1154,7 +1154,7 @@ export default function Home() {
           {/* 04 — the build: one project, walked */}
           <div className="beat" data-beat="3">
             <div className="beat-meta">
-              the one I&apos;d want you to open &middot;{" "}
+              the project I&apos;m proudest of &middot;{" "}
               <a href="https://code-party-dusky.vercel.app" target="_blank" rel="noreferrer">code-party-dusky.vercel.app</a>
               {" \u00b7 "}
               <a href="https://code-party-dusky.vercel.app/room/DEMO" target="_blank" rel="noreferrer">or watch the 80s demo</a>
@@ -1168,7 +1168,7 @@ export default function Home() {
             <div className="pstage-inner tall" id="buildStage">
               <div className="pstep shot-step">
                 <div>
-                  <div className="who">code party &middot; <span className="live-pill">playable, no signup</span></div>
+                  <div className="who">code party &middot; <span className="live-pill">shipped, no signup</span></div>
                   <h2>2&ndash;10 players, one room, one clock.</h2>
                   <p>A four-character code and a display name. Three game modes share the same room, lobby, timer and reconnect skeleton &mdash; mode is a setting, not a separate app.</p>
                   <div className="art">
@@ -1389,7 +1389,7 @@ export default function Home() {
               const matched = j.highlights?.filter((h) => h.tech?.includes(lens as Lens)).length ?? 0;
               const lensTags = LENSES.find((l) => l.key === lens)?.tags ?? [];
               return (
-                <div className={`item reveal${lens !== "all" && matched === 0 ? " dim" : ""}`} key={j.company}>
+                <div className="item reveal" data-dim={lens !== "all" && matched === 0 ? "" : undefined} key={j.company}>
                   <div className="when">
                     <span className="range">{formatRange(j)}</span>
                     <span className="dur" suppressHydrationWarning>
