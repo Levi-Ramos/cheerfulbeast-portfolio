@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaGithub, FaLinkedinIn } from "react-icons/fa6";
 import { ChevronLeft, ChevronRight, Lock, Search } from "lucide-react";
-import { projects, experience, skills, type Project, type TermLine } from "@/lib/portfolio-data";
+import { projects, experience, skillGroups, type Project, type TermLine } from "@/lib/portfolio-data";
 
 const GITHUB = "https://github.com/Levi-Ramos";
 const LINKEDIN = "https://www.linkedin.com/in/rowserowserowse/";
@@ -128,6 +128,7 @@ export default function Home() {
   const pagedotRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const paletteInputRef = useRef<HTMLInputElement>(null);
   const projectRefs = useRef<(HTMLElement | null)[]>([]);
+  const [projTab, setProjTab] = useState<"work" | "personal">("work");
   const galaxyGateRef = useRef<HTMLPreElement>(null);
   const galaxyContactRef = useRef<HTMLPreElement>(null);
 
@@ -142,6 +143,87 @@ export default function Home() {
     else if (p.responsibilities?.length)
       setLb({ i: 0, title: p.name, desc: p.desc, role: p.role, origin: p.origin, responsibilities: p.responsibilities, tags: p.tags, link: p.link });
   };
+  const renderProjectCard = (p: Project, i: number) => {
+    const hasModal = !!(p.images?.length || p.terminal || p.responsibilities?.length);
+    const showThumbImage = !!p.images?.length;
+    const overlay = p.images?.length
+      ? (p.imagesLabel ?? "View screenshots →")
+      : p.terminal
+      ? (p.imagesLabel ?? "View install →")
+      : p.responsibilities?.length
+      ? "View details →"
+      : p.link
+      ? "Visit live site →"
+      : null;
+
+    const content = (
+      <>
+        <div className="thumb" style={showThumbImage ? { padding: 0, background: "#0a0d14" } : { background: p.grad }}>
+          {showThumbImage ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.images![0]} alt={p.name} />
+              <div className="overlay">{overlay}</div>
+            </>
+          ) : p.locked ? (
+            <>
+              <Lock size={34} color={p.glyphColor} strokeWidth={1.5} />
+              {overlay && <div className="overlay">{overlay}</div>}
+            </>
+          ) : (
+            <>
+              <span className="glyph" style={{ color: p.glyphColor }}>{p.glyph}</span>
+              {overlay && <div className="overlay">{overlay}</div>}
+            </>
+          )}
+          <span className={`badge ${p.badge}`}><span className="bdot" />{p.status}</span>
+        </div>
+        <div className="proj-body">
+          <h3>{p.name}</h3>
+          <div className="role">{p.role}</div>
+          <p>{p.desc}</p>
+          <div className="tags">{p.tags.map((t) => <span className="tag" key={t}>{t}</span>)}</div>
+        </div>
+      </>
+    );
+
+    const setRef = (el: HTMLElement | null) => {
+      projectRefs.current[i] = el;
+    };
+
+    if (p.link && !hasModal) {
+      return (
+        <a key={p.name} ref={setRef} className="proj reveal clickable" href={p.link} target="_blank" rel="noreferrer">
+          {content}
+        </a>
+      );
+    }
+
+    return (
+      <div
+        key={p.name}
+        ref={setRef}
+        className={`proj reveal${hasModal ? " clickable" : ""}`}
+        onClick={() => openProject(p)}
+        role={hasModal ? "button" : undefined}
+        tabIndex={hasModal ? 0 : undefined}
+        onKeyDown={(e) => { if (hasModal && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openProject(p); } }}
+      >
+        {content}
+      </div>
+    );
+  };
+
+  // The hidden panel sits outside the viewport, so its cards never trip the reveal observer —
+  // mark them revealed on switch instead of waiting for an intersection that won't come.
+  const switchProjTab = (tab: "work" | "personal") => {
+    setProjTab(tab);
+    document.querySelectorAll<HTMLElement>("#projects .proj.reveal:not(.in)").forEach((el) => {
+      el.style.transitionDelay = "";
+      el.classList.add("in");
+    });
+  };
+
   const closeLb = () => setLb(null);
   const stepLb = (d: number) => {
     setLb((s) => (s?.images ? { ...s, i: (s.i + d + s.images.length) % s.images.length } : s));
@@ -449,28 +531,24 @@ export default function Home() {
   // ---------- reveal-on-scroll ----------
   useEffect(() => {
     const io = new IntersectionObserver(
-      (entries) =>
+      (entries) => {
+        // Stagger by position within the batch that just came into view — and cap it. Indexing
+        // by position in the whole group meant a 23-tile grid queued up ~1.8s of delay, and any
+        // element already on screen at load inherited a delay it never earned.
+        let n = 0;
         entries.forEach((e) => {
-          if (e.isIntersecting) {
-            const el = e.target as HTMLElement;
-            el.classList.add("in");
-            io.unobserve(el);
-            // the stagger delay above is only for this reveal transition — clear it once
-            // it fires, so it doesn't keep throttling later hover/tilt transitions on el.
-            el.addEventListener("transitionend", () => { el.style.transitionDelay = ""; }, { once: true });
-          }
-        }),
+          if (!e.isIntersecting) return;
+          const el = e.target as HTMLElement;
+          if (!reducedRef.current) el.style.transitionDelay = `${Math.min(n++, 5) * 55}ms`;
+          el.classList.add("in");
+          io.unobserve(el);
+          // the stagger delay is only for this reveal transition — clear it once it fires, so it
+          // doesn't keep throttling later hover/tilt transitions on el.
+          el.addEventListener("transitionend", () => { el.style.transitionDelay = ""; }, { once: true });
+        });
+      },
       { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
     );
-    if (!reducedRef.current) {
-      document
-        .querySelectorAll<HTMLElement>(".glance,.projects,.tl,.skillgrid,.hero-cta,.contact .row")
-        .forEach((group) => {
-          group.querySelectorAll<HTMLElement>(".reveal").forEach((el, i) => {
-            el.style.transitionDelay = `${i * 80}ms`;
-          });
-        });
-    }
     document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, []);
@@ -1066,77 +1144,24 @@ export default function Home() {
       <section id="projects" className="pf-section">
         <div className="pf-wrap">
           <div className="sec-head reveal"><span className="sec-num">01</span><span className="sec-title">Selected Projects</span><span className="sec-sub">tilt a card</span></div>
-          <div className="projects">
-            {projects.map((p, i) => {
-              const hasModal = !!(p.images?.length || p.terminal || p.responsibilities?.length);
-              const showThumbImage = !!p.images?.length;
-              const overlay = p.images?.length
-                ? (p.imagesLabel ?? "View screenshots →")
-                : p.terminal
-                ? (p.imagesLabel ?? "View install →")
-                : p.responsibilities?.length
-                ? "View details →"
-                : p.link
-                ? "Visit live site →"
-                : null;
-
-              const content = (
-                <>
-                  <div className="thumb" style={showThumbImage ? { padding: 0, background: "#0a0d14" } : { background: p.grad }}>
-                    {showThumbImage ? (
-                      <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p.images![0]} alt={p.name} />
-                        <div className="overlay">{overlay}</div>
-                      </>
-                    ) : p.locked ? (
-                      <>
-                        <Lock size={34} color={p.glyphColor} strokeWidth={1.5} />
-                        {overlay && <div className="overlay">{overlay}</div>}
-                      </>
-                    ) : (
-                      <>
-                        <span className="glyph" style={{ color: p.glyphColor }}>{p.glyph}</span>
-                        {overlay && <div className="overlay">{overlay}</div>}
-                      </>
-                    )}
-                    <span className={`badge ${p.badge}`}><span className="bdot" />{p.status}</span>
-                  </div>
-                  <div className="proj-body">
-                    <h3>{p.name}</h3>
-                    <div className="role">{p.role}</div>
-                    <p>{p.desc}</p>
-                    <div className="tags">{p.tags.map((t) => <span className="tag" key={t}>{t}</span>)}</div>
-                  </div>
-                </>
-              );
-
-              const setRef = (el: HTMLElement | null) => {
-                projectRefs.current[i] = el;
-              };
-
-              if (p.link && !hasModal) {
-                return (
-                  <a key={p.name} ref={setRef} className="proj reveal clickable" href={p.link} target="_blank" rel="noreferrer">
-                    {content}
-                  </a>
-                );
-              }
-
-              return (
-                <div
-                  key={p.name}
-                  ref={setRef}
-                  className={`proj reveal${hasModal ? " clickable" : ""}`}
-                  onClick={() => openProject(p)}
-                  role={hasModal ? "button" : undefined}
-                  tabIndex={hasModal ? 0 : undefined}
-                  onKeyDown={(e) => { if (hasModal && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openProject(p); } }}
-                >
-                  {content}
-                </div>
-              );
-            })}
+          <div className="projtabs reveal">
+            {([["work", "Work"], ["personal", "Personal"]] as const).map(([k, label]) => (
+              <button
+                key={k}
+                type="button"
+                className={`projtab clickable${projTab === k ? " on" : ""}`}
+                aria-pressed={projTab === k}
+                onClick={() => switchProjTab(k)}
+              >
+                {label}<span className="ct">{projects.filter((p) => p.kind === k).length}</span>
+              </button>
+            ))}
+          </div>
+          <div className="projtrack-clip">
+            <div className="projtrack" data-tab={projTab}>
+              <div className="projects">{projects.map((p, i) => (p.kind === "work" ? renderProjectCard(p, i) : null))}</div>
+              <div className="projects">{projects.map((p, i) => (p.kind === "personal" ? renderProjectCard(p, i) : null))}</div>
+            </div>
           </div>
         </div>
       </section>
@@ -1169,28 +1194,33 @@ export default function Home() {
       <section id="skills" className="pf-section">
         <div className="pf-wrap">
           <div className="sec-head reveal"><span className="sec-num">03</span><span className="sec-title">Skills</span><span className="sec-sub">move your cursor over the grid</span></div>
-          <div className="skillgrid">
-            {skills.map(({ name, Icon, color }) => (
-              <div
-                className="skilltile reveal"
-                key={name}
-                style={{ ["--b" as string]: color } as React.CSSProperties}
-                onMouseEnter={(e) => {
-                  const r = e.currentTarget.getBoundingClientRect();
-                  e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
-                  e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
-                }}
-                onMouseMove={(e) => {
-                  const r = e.currentTarget.getBoundingClientRect();
-                  e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
-                  e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
-                }}
-              >
-                <div className="logo"><Icon size={34} color={color} /></div>
-                <div className="nm">{name}</div>
+          {skillGroups.map((g) => (
+            <div className="skillgroup" key={g.label}>
+              <div className="sk-label reveal">{g.label}<span className="ct">{g.items.length}</span></div>
+              <div className="skillgrid">
+                {g.items.map(({ name, Icon, color }) => (
+                  <div
+                    className="skilltile reveal"
+                    key={name}
+                    style={{ ["--b" as string]: color } as React.CSSProperties}
+                    onMouseEnter={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect();
+                      e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+                      e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+                    }}
+                    onMouseMove={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect();
+                      e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+                      e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+                    }}
+                  >
+                    <div className="logo"><Icon size={30} color={color} /></div>
+                    <div className="nm">{name}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </section>
 

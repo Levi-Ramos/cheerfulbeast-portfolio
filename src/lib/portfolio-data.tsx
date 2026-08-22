@@ -12,6 +12,8 @@ export type TermLine = [text: string, cls?: "p" | "out" | "warn" | "ok" | "dim"]
 
 export type Project = {
   name: string;
+  /** Which grid tab the card lives in: paid production work vs. self-directed builds. */
+  kind: "work" | "personal";
   status: string;
   badge: "dev" | "ship" | "cap";
   role: string;
@@ -34,6 +36,7 @@ export type Project = {
 export const projects: Project[] = [
   {
     name: "Groundtruth",
+    kind: "personal",
     status: "SHIPPED",
     badge: "ship",
     role: "Solo build — RAG pipeline + full-stack",
@@ -47,6 +50,7 @@ export const projects: Project[] = [
   },
   {
     name: "Destiny 2 MCP Server",
+    kind: "personal",
     status: "SHIPPED",
     badge: "ship",
     role: "Solo build — MCP server + Bungie API",
@@ -76,6 +80,7 @@ export const projects: Project[] = [
   },
   {
     name: "ActiveOne Field Sales",
+    kind: "work",
     status: "CONFIDENTIAL",
     badge: "dev",
     role: "Sole developer",
@@ -94,6 +99,7 @@ export const projects: Project[] = [
   },
   {
     name: "ActiveWork",
+    kind: "work",
     status: "CONFIDENTIAL",
     badge: "dev",
     role: "Primary dev, web client",
@@ -112,6 +118,7 @@ export const projects: Project[] = [
   },
   {
     name: "ServePOS",
+    kind: "work",
     status: "CONFIDENTIAL",
     badge: "dev",
     role: "Feature dev + release automation",
@@ -128,7 +135,20 @@ export const projects: Project[] = [
     ],
   },
   {
+    name: "Code Party",
+    kind: "personal",
+    status: "IN PROGRESS",
+    badge: "dev",
+    role: "Solo build — real-time multiplayer + LLM judging",
+    desc: "A skribbl.io-style party game for programmers — a room of players races a shared timer, submits work, and gets judged each round. UI Speedbuild has players building a live HTML/CSS/JS snippet against a prompt with a sandboxed live preview, then voting on each other's submissions; System Design has them writing an architecture answer that's scored by an LLM against a fixed rubric. Server-owned timers and full-resync reconnect via a PartyKit room server over WebSockets.",
+    tags: ["Next.js", "PartyKit", "WebSockets", "TypeScript", "Gemini", "CodeMirror"],
+    glyphColor: "#4ade80",
+    grad: "linear-gradient(135deg,#0f2318,#0a0d14)",
+    images: ["/code-party-coding.png", "/code-party-reveal.png", "/code-party-landing.png"],
+  },
+  {
     name: "Restaurant Ordering System",
+    kind: "personal",
     status: "CAPSTONE",
     badge: "cap",
     role: "Full-stack + AI integration",
@@ -200,29 +220,55 @@ export const experience: Job[] = [
 ];
 
 export type Skill = { name: string; Icon: IconType; color: string };
+export type SkillGroup = { label: string; items: Skill[] };
 
-export const skills: Skill[] = [
-  { name: "Dart", Icon: SiDart, color: "#0175C2" },
-  { name: "Flutter", Icon: SiFlutter, color: "#02569B" },
-  { name: "TypeScript", Icon: SiTypescript, color: "#3178C6" },
-  { name: "JavaScript", Icon: SiJavascript, color: "#E8B800" },
-  { name: "C#", Icon: TbBrandCSharp, color: "#9B4F96" },
-  { name: ".NET Core", Icon: SiDotnet, color: "#512BD4" },
-  { name: "React", Icon: FaReact, color: "#0EA5C7" },
-  { name: "Next.js", Icon: SiNextdotjs, color: "#0a0d14" },
-  { name: "Vue / Quasar", Icon: FaVuejs, color: "#42B883" },
-  { name: "Blazor", Icon: SiBlazor, color: "#5C2D91" },
-  { name: "Laravel", Icon: SiLaravel, color: "#FF2D20" },
-  { name: "PHP", Icon: FaPhp, color: "#777BB4" },
-  { name: "Python", Icon: FaPython, color: "#3776AB" },
-  { name: "Java", Icon: FaJava, color: "#E76F00" },
-  { name: "Spring Boot", Icon: BiLogoSpringBoot, color: "#6DB33F" },
-  { name: "Flask", Icon: SiFlask, color: "#0a0d14" },
-  { name: "Django", Icon: SiDjango, color: "#0C4B33" },
-  { name: "PostgreSQL", Icon: SiPostgresql, color: "#4169E1" },
-  { name: "MySQL", Icon: SiMysql, color: "#00758F" },
-  { name: "Docker", Icon: FaDocker, color: "#2496ED" },
-  { name: "GitHub Actions", Icon: SiGithubactions, color: "#2088FF" },
-  { name: "Fastlane", Icon: SiFastlane, color: "#22A45B" },
-  { name: "Git", Icon: SiGit, color: "#F05032" },
+export const skillGroups: SkillGroup[] = [
+  {
+    label: "Languages",
+    items: [
+      { name: "Dart", Icon: SiDart, color: "#0175C2" },
+      { name: "TypeScript", Icon: SiTypescript, color: "#3178C6" },
+      { name: "JavaScript", Icon: SiJavascript, color: "#E8B800" },
+      { name: "C#", Icon: TbBrandCSharp, color: "#9B4F96" },
+      { name: "PHP", Icon: FaPhp, color: "#777BB4" },
+      { name: "Python", Icon: FaPython, color: "#3776AB" },
+      { name: "Java", Icon: FaJava, color: "#E76F00" },
+    ],
+  },
+  {
+    label: "Frontend & Mobile",
+    items: [
+      { name: "Flutter", Icon: SiFlutter, color: "#02569B" },
+      { name: "React", Icon: FaReact, color: "#0EA5C7" },
+      { name: "Next.js", Icon: SiNextdotjs, color: "#0a0d14" },
+      { name: "Vue / Quasar", Icon: FaVuejs, color: "#42B883" },
+      { name: "Blazor", Icon: SiBlazor, color: "#5C2D91" },
+    ],
+  },
+  {
+    label: "Backend",
+    items: [
+      { name: ".NET Core", Icon: SiDotnet, color: "#512BD4" },
+      { name: "Laravel", Icon: SiLaravel, color: "#FF2D20" },
+      { name: "Spring Boot", Icon: BiLogoSpringBoot, color: "#6DB33F" },
+      { name: "Flask", Icon: SiFlask, color: "#0a0d14" },
+      { name: "Django", Icon: SiDjango, color: "#0C4B33" },
+    ],
+  },
+  {
+    label: "Databases",
+    items: [
+      { name: "PostgreSQL", Icon: SiPostgresql, color: "#4169E1" },
+      { name: "MySQL", Icon: SiMysql, color: "#00758F" },
+    ],
+  },
+  {
+    label: "Tools & DevOps",
+    items: [
+      { name: "Docker", Icon: FaDocker, color: "#2496ED" },
+      { name: "GitHub Actions", Icon: SiGithubactions, color: "#2088FF" },
+      { name: "Fastlane", Icon: SiFastlane, color: "#22A45B" },
+      { name: "Git", Icon: SiGit, color: "#F05032" },
+    ],
+  },
 ];
