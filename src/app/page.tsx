@@ -601,8 +601,11 @@ export default function Home() {
       window.addEventListener("mousemove", onMove);
       cleanups.push(() => window.removeEventListener("mousemove", onMove));
 
+      let painted = false;
       let trailRaf = requestAnimationFrame(function loop() {
-        if (tctx) {
+        // a still pointer means nothing to draw — don't spend a full-viewport clear on it
+        if (tctx && (pix.length || painted)) {
+          painted = pix.length > 0;
           tctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
           for (let i = pix.length - 1; i >= 0; i--) {
             const p = pix[i];
@@ -671,17 +674,13 @@ export default function Home() {
         stars.forEach((s) => {
           const o = reduced ? 0.5 : Math.sin(t * s.speed + s.phase) * 0.4 + 0.5;
           ctx.globalAlpha = o * 0.7;
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-          ctx.fill();
+          // a rect, not an arc: at r < 1.5px they're indistinguishable, and 144 arc
+          // paths per frame was the single most expensive thing on the page
+          ctx.fillRect(s.x - s.r, s.y - s.r, s.r * 2, s.r * 2);
         });
         ctx.globalAlpha = 1;
 
         if (!reduced) {
-          if (t > nextCometAt) {
-            spawnComet();
-            nextCometAt = t + 5 + Math.random() * 9;
-          }
           comets = comets.filter((c) => c.life < c.maxLife);
           comets.forEach((c) => {
             c.x += c.vx; c.y += c.vy; c.life++;
@@ -710,8 +709,21 @@ export default function Home() {
       cleanups.push(() => window.removeEventListener("resize", resize));
       resize();
       if (!reduced) {
-        let raf = requestAnimationFrame(function loop(t) {
-          draw(t / 1000);
+        // The twinkle sine has a period of several minutes, so repainting the star layer
+        // 60 times a second animates nothing visible — it just spends a full-viewport
+        // repaint per frame and halves the frame budget for everything else on the page.
+        // Stars settle for ~8fps; a streaking comet pulls the loop back up to full rate.
+        let lastStars = -1;
+        let raf = requestAnimationFrame(function loop(ms) {
+          const t = ms / 1000;
+          if (t > nextCometAt) {
+            spawnComet();
+            nextCometAt = t + 5 + Math.random() * 9;
+          }
+          if (comets.length || t - lastStars > 0.12) {
+            draw(t);
+            lastStars = t;
+          }
           raf = requestAnimationFrame(loop);
         });
         cleanups.push(() => cancelAnimationFrame(raf));
@@ -1026,7 +1038,7 @@ export default function Home() {
     window.addEventListener("resize", fit);
 
     // stars in normalised camera space; z shrinking toward 0 is the camera flying into them
-    const field = Array.from({ length: 900 }, () => ({
+    const field = Array.from({ length: 820 }, () => ({
       x: Math.random() * 2 - 1,
       y: Math.random() * 2 - 1,
       z: Math.random() * 0.96 + 0.04,
@@ -1074,25 +1086,39 @@ export default function Home() {
           const near = 1 - s.z;
           // streaks are columns of lattice pixels, never smooth lines, so the finale and
           // the cursor trail stay the same material
-          const n = Math.min(120, Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / PIX)));
+          // capped so one very long streak can't alone cost thousands of fills a frame
+          const n = Math.min(64, Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / PIX)));
           ctx.fillStyle = s.c;
+          let px = NaN, py = NaN;
           for (let i = 0; i < n; i++) {
             const t = i / n;
+            const qx = snapPix(lerp(x1, x0, t)), qy = snapPix(lerp(y1, y0, t));
+            if (qx === px && qy === py) continue; // same lattice cell as the last sample
+            px = qx; py = qy;
             const sz = t < 0.3 ? 6 : t < 0.7 ? 4 : 3;
             ctx.globalAlpha = pixAlpha(t) * (0.35 + 0.65 * near) * vis;
-            ctx.fillRect(snapPix(lerp(x1, x0, t)) - sz / 2, snapPix(lerp(y1, y0, t)) - sz / 2, sz, sz);
+            ctx.fillRect(qx - sz / 2, qy - sz / 2, sz, sz);
           }
         }
         ctx.globalAlpha = 1;
       }
 
-      // exponential, so it reads as approach rather than a linear CSS scale-up
-      const gScale = Math.pow(46, zoom);
-      galaxy.style.transform = `translate(-50%,-50%) scale(${gScale.toFixed(3)})`;
-      galaxy.style.opacity = (ease(seg(p, 0, 0.08)) * 0.85 * (1 - ease(seg(p, 0.4, 0.52)))).toFixed(3);
-      // filter runs before transform, so a plain blur value gets multiplied by the scale
-      // and smears the galaxy into soup — divide it back out to keep it constant on screen
-      galaxy.style.filter = zoom > 0.3 ? `blur(${(((zoom - 0.3) * 11) / gScale).toFixed(3)}px)` : "none";
+      // A scaled <pre> is a real composited layer: at 30x it is ~8000px across and costs
+      // a whole frame budget to raster, even at zero opacity. Take it out of the tree the
+      // moment it stops being visible — for most of the section that is the whole cost.
+      const gAlpha = ease(seg(p, 0, 0.08)) * 0.85 * (1 - ease(seg(p, 0.4, 0.52)));
+      if (gAlpha < 0.005) {
+        galaxy.style.display = "none";
+      } else {
+        // exponential, so it reads as approach rather than a linear CSS scale-up
+        const gScale = Math.pow(30, zoom);
+        galaxy.style.display = "";
+        galaxy.style.opacity = gAlpha.toFixed(3);
+        galaxy.style.transform = `translate(-50%,-50%) scale(${gScale.toFixed(3)})`;
+        // filter runs before transform, so a plain blur gets multiplied by the scale and
+        // smears the galaxy into soup — divide it back out to keep it constant on screen
+        galaxy.style.filter = zoom > 0.3 ? `blur(${(((zoom - 0.3) * 11) / gScale).toFixed(3)}px)` : "none";
+      }
 
       beats.forEach((el, i) => {
         const o = clamp01(1 - Math.abs(p - FINALE_BEATS[i].at) / FINALE_BEAT_SPAN);
