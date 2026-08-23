@@ -307,7 +307,7 @@ button, input { font-family:inherit; color:inherit; }
    position, so scrolling back up replays it in reverse for free. */
 /* deliberately not a snap target: proximity snap would keep yanking you back to the
    section start while you are scrubbing the sequence */
-.contact { position:relative; height:700vh; }
+.contact { position:relative; height:1000vh; }
 .fstage { position:sticky; top:0; height:100vh; overflow:hidden; }
 #finaleField { position:absolute; inset:0; width:100%; height:100%; }
 .fgalaxy { position:absolute; left:50%; top:50%; margin:0; font-family:var(--mono); font-size:13px; line-height:1.05; white-space:pre; user-select:none; color:var(--accent); transform-origin:50% 50%; pointer-events:none; }
@@ -331,7 +331,7 @@ button, input { font-family:inherit; color:inherit; }
 .fhud .tr { right:52px; top:calc(var(--nav-h) + 16px); }
 .fhud .br { right:52px; bottom:24px; font-variant-numeric:tabular-nums; }
 .fhud b { color:var(--accent2); font-weight:400; }
-@media (max-width:760px){ .contact{ height:420vh; } }
+@media (max-width:760px){ .contact{ height:620vh; } }
 /* Must sit after the rules above, not up with the other reduced-motion overrides —
    same specificity, so source order is the only thing that decides. */
 @media (prefers-reduced-motion:reduce){

@@ -133,13 +133,15 @@ function jumpToSection(id: string, smooth: boolean) {
   });
 }
 
-// The three lines that land during the warp, each at its own point in the section's scroll.
+// The three lines that land during the warp. Each owns a [from, to] slice of the section's
+// scroll and holds at full opacity across the middle of it — a peak-and-fall curve reads
+// as a flash and gives no time to actually read the line.
 const FINALE_BEATS = [
-  { at: 0.575, h: "Build it together", s: "you bring the problem" },
-  { at: 0.675, h: "Ship it for real", s: "not a prototype that dies in staging" },
-  { at: 0.775, h: "Make it last", s: "the part everyone skips" },
+  { from: 0.4, to: 0.565, h: "Build it together", s: "you bring the problem" },
+  { from: 0.565, to: 0.73, h: "Ship it for real", s: "not a prototype that dies in staging" },
+  { from: 0.73, to: 0.895, h: "Make it last", s: "the part everyone skips" },
 ];
-const FINALE_BEAT_SPAN = 0.085;
+const FINALE_BEAT_EDGE = 0.035; // fade in/out at each end; the rest of the slice is a hold
 
 const LONGEST_ROLE = Math.max(...experience.map((j) => monthsIn(j)));
 
@@ -1054,16 +1056,25 @@ export default function Home() {
     const seg = (p: number, a: number, b: number) => clamp01((p - a) / (b - a));
     const ease = (t: number) => t * t * (3 - 2 * t);
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    // fade in over `edge`, hold flat, fade out over `edge` — same shape the prologue uses
+    const ramp = (n: number, a: number, b: number, edge: number) => {
+      if (n <= a || n >= b) return 0;
+      if (n < a + edge) return (n - a) / edge;
+      if (n > b - edge) return (b - n) / edge;
+      return 1;
+    };
 
     const draw = () => {
       const r = root.getBoundingClientRect();
       const travel = r.height - H;
       const p = travel > 0 ? clamp01(-r.top / travel) : 0;
 
-      const zoom = ease(seg(p, 0.13, 0.5)); // THE GALAXY is what enlarges
-      const rush = ease(seg(p, 0.3, 0.52)); // the field starts streaming past
-      const warp = ease(seg(p, 0.48, 0.6)) * (1 - ease(seg(p, 0.82, 0.93)));
-      const pullOut = ease(seg(p, 0.88, 1));
+      // The approach is compressed to the front so the three lines get most of the
+      // section's scroll to hold across — they are the part that has to be read.
+      const zoom = ease(seg(p, 0.06, 0.3)); // THE GALAXY is what enlarges
+      const rush = ease(seg(p, 0.18, 0.34)); // the field starts streaming past
+      const warp = ease(seg(p, 0.3, 0.4)) * (1 - ease(seg(p, 0.88, 0.96)));
+      const pullOut = ease(seg(p, 0.93, 1));
 
       ctx?.clearRect(0, 0, W, H);
       if (ctx && (rush > 0.02 || pullOut > 0)) {
@@ -1106,7 +1117,7 @@ export default function Home() {
       // A scaled <pre> is a real composited layer: at 30x it is ~8000px across and costs
       // a whole frame budget to raster, even at zero opacity. Take it out of the tree the
       // moment it stops being visible — for most of the section that is the whole cost.
-      const gAlpha = ease(seg(p, 0, 0.08)) * 0.85 * (1 - ease(seg(p, 0.4, 0.52)));
+      const gAlpha = ease(seg(p, 0, 0.05)) * 0.85 * (1 - ease(seg(p, 0.24, 0.33)));
       if (gAlpha < 0.005) {
         galaxy.style.display = "none";
       } else {
@@ -1121,12 +1132,13 @@ export default function Home() {
       }
 
       beats.forEach((el, i) => {
-        const o = clamp01(1 - Math.abs(p - FINALE_BEATS[i].at) / FINALE_BEAT_SPAN);
-        el.style.opacity = (o * o).toFixed(3);
+        const { from, to } = FINALE_BEATS[i];
+        const o = ease(ramp(p, from, to, FINALE_BEAT_EDGE));
+        el.style.opacity = o.toFixed(3);
         el.style.transform = `scale(${lerp(0.94, 1, o).toFixed(3)})`;
       });
 
-      const fin = ease(seg(p, 0.9, 0.995));
+      const fin = ease(seg(p, 0.94, 0.995));
       if (card) {
         card.style.opacity = fin.toFixed(3);
         card.style.transform = `translateY(${lerp(26, 0, fin).toFixed(1)}px)`;
@@ -1714,7 +1726,7 @@ export default function Home() {
           <pre className="fgalaxy" aria-hidden="true" style={{ width: `${GALAXY_COLS}ch` }} ref={galaxyContactRef} />
 
           {FINALE_BEATS.map((b) => (
-            <div className="fbeat" key={b.h} data-at={b.at}>
+            <div className="fbeat" key={b.h}>
               <h2>{b.h}</h2>
               <p>{b.s}</p>
             </div>
