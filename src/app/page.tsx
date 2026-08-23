@@ -64,7 +64,24 @@ const BUILD_STAGES = ["the room", "the round", "the reveal"];
  *  0.42 wide, and a proportional fade there outlasts its own first sub-stage. */
 const EDGE = 0.04;
 
-const TRAIL_CHARS = ["0", "1", ".", "+", "*", "/", "\\", "<", ">", ":"];
+// The pixel dialect, shared by the cursor trail and the contact finale so they read as
+// the same material: everything snaps to a 6px lattice and fades in four hard steps.
+const PIX = 6;
+const PIX_STEPS = [1, 0.75, 0.45, 0.18];
+const snapPix = (n: number) => Math.round(n / PIX) * PIX;
+const pixAlpha = (k: number) => PIX_STEPS[Math.min(3, Math.max(0, (k * 4) | 0))];
+// canvas can't read CSS vars, so pull the palette off :root once per effect
+const readAccents = () => {
+  const css = getComputedStyle(document.documentElement);
+  const v = (n: string, fallback: string) => css.getPropertyValue(n).trim() || fallback;
+  return { a: v("--accent", "#4ade80"), b: v("--accent2", "#22d3ee"), w: v("--warn", "#e0af68") };
+};
+const fitCanvas = (c: HTMLCanvasElement, ctx: CanvasRenderingContext2D | null, w: number, h: number) => {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  c.width = w * dpr;
+  c.height = h * dpr;
+  ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
+};
 
 // rotating ascii galaxy — a fixed-size character grid so every animation frame renders
 // at the exact same width/height (no layout jitter), driven into a <pre> via ref + interval
@@ -102,6 +119,28 @@ function renderGalaxyFrame(stars: { r: number; a0: number; spin: number }[], ang
   return grid.map((row) => row.join("")).join("\n");
 }
 
+// The finale is a tall scrubbed section whose contact card only exists at the very bottom,
+// so every "go to contact" affordance has to land there rather than at the section's start —
+// and it lands instantly, because someone clicking Contact wants the address, not the ride.
+function jumpToSection(id: string, smooth: boolean) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const toEnd = id === "contact";
+  window.scrollTo({
+    top: window.scrollY + r.top + (toEnd ? r.height - window.innerHeight : 0),
+    behavior: smooth && !toEnd ? "smooth" : "instant",
+  });
+}
+
+// The three lines that land during the warp, each at its own point in the section's scroll.
+const FINALE_BEATS = [
+  { at: 0.575, h: "Build it together", s: "you bring the problem" },
+  { at: 0.675, h: "Ship it for real", s: "not a prototype that dies in staging" },
+  { at: 0.775, h: "Make it last", s: "the part everyone skips" },
+];
+const FINALE_BEAT_SPAN = 0.085;
+
 const LONGEST_ROLE = Math.max(...experience.map((j) => monthsIn(j)));
 
 export default function Home() {
@@ -126,7 +165,7 @@ export default function Home() {
   const gateTermRef = useRef<HTMLDivElement>(null);
   const gateBootRef = useRef<HTMLDivElement>(null);
   const cursorDotRef = useRef<HTMLDivElement>(null);
-  const cursorTrailRef = useRef<HTMLDivElement>(null);
+  const cursorTrailRef = useRef<HTMLCanvasElement>(null);
   const starfieldRef = useRef<HTMLCanvasElement>(null);
   const a1Ref = useRef<HTMLDivElement>(null);
   const a2Ref = useRef<HTMLDivElement>(null);
@@ -140,6 +179,8 @@ export default function Home() {
   const [lens, setLens] = useState<Lens | "all">("all");
   const galaxyGateRef = useRef<HTMLPreElement>(null);
   const galaxyContactRef = useRef<HTMLPreElement>(null);
+  const finaleRef = useRef<HTMLElement>(null);
+  const finaleFieldRef = useRef<HTMLCanvasElement>(null);
 
   // mutable flags that shouldn't trigger re-renders
   const gateOpenRef = useRef(true);
@@ -367,7 +408,7 @@ export default function Home() {
     { l: "Go to Projects", h: "section", a: () => document.querySelector("#projects")?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" }) },
     { l: "Go to Experience", h: "section", a: () => document.querySelector("#experience")?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" }) },
     { l: "Go to Skills", h: "section", a: () => document.querySelector("#skills")?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" }) },
-    { l: "Go to Contact", h: "section", a: () => document.querySelector("#contact")?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" }) },
+    { l: "Go to Contact", h: "section", a: () => jumpToSection("contact", !reducedRef.current) },
     { l: "View Resume", h: "↗", a: () => window.open("/resume.pdf", "_blank", "noopener") },
     { l: "Open GitHub", h: "↗", a: () => window.open(GITHUB, "_blank", "noopener") },
     { l: "Open LinkedIn", h: "↗", a: () => window.open(LINKEDIN, "_blank", "noopener") },
@@ -513,43 +554,45 @@ export default function Home() {
     const finePointer = window.matchMedia("(pointer: fine)").matches;
     const cleanups: Array<() => void> = [];
 
-    // custom cursor + cone comet trail
+    // custom cursor + pixel comet trail: three pixels per step, sprayed into a ±25° cone
+    // pointing back down the tail, then quantised to the lattice as they drift and fade
     const dot = cursorDotRef.current;
-    const trailContainer = cursorTrailRef.current;
-    if (finePointer && !reduced && dot && trailContainer) {
+    const trailCanvas = cursorTrailRef.current;
+    if (finePointer && !reduced && dot && trailCanvas) {
+      const tctx = trailCanvas.getContext("2d");
+      const { a: ACC, b: ACC2 } = readAccents();
+      const pix: { x: number; y: number; vx: number; vy: number; t: number; life: number; c: string }[] = [];
       let lastX: number | null = null;
       let lastY: number | null = null;
-      const queue: HTMLSpanElement[] = [];
+
+      const fitTrail = () => fitCanvas(trailCanvas, tctx, window.innerWidth, window.innerHeight);
+      fitTrail();
+      window.addEventListener("resize", fitTrail);
+      cleanups.push(() => window.removeEventListener("resize", fitTrail));
+
       const onMove = (e: MouseEvent) => {
         const mx = e.clientX, my = e.clientY;
         dot.style.transform = `translate(${mx}px,${my}px)`;
-        let dx = 0, dy = -1;
-        if (lastX !== null && lastY !== null) {
+        if (lastX === null || lastY === null) {
+          lastX = mx; lastY = my;
+        } else {
           const ddx = mx - lastX, ddy = my - lastY;
           const dist = Math.hypot(ddx, ddy);
-          if (dist >= 14) {
-            dx = ddx / dist; dy = ddy / dist;
+          if (dist >= 4) {
             lastX = mx; lastY = my;
-            const side = Math.random() < 0.5 ? -1 : 1;
-            const spread = 6 + Math.random() * 22;
-            const back = 6 + Math.random() * 10;
-            const ex = -dy * side * spread - dx * back;
-            const ey = dx * side * spread - dy * back;
-            const span = document.createElement("span");
-            span.className = "trail-glyph";
-            span.textContent = TRAIL_CHARS[Math.floor(Math.random() * TRAIL_CHARS.length)];
-            span.style.left = `${mx}px`;
-            span.style.top = `${my}px`;
-            span.style.setProperty("--ex", `${ex}px`);
-            span.style.setProperty("--ey", `${ey}px`);
-            span.style.color = Math.random() < 0.7 ? "var(--accent)" : "var(--accent2)";
-            trailContainer.appendChild(span);
-            span.addEventListener("animationend", () => span.remove());
-            queue.push(span);
-            if (queue.length > 40) queue.shift()?.remove();
+            const base = Math.atan2(-ddy / dist, -ddx / dist);
+            for (let i = 0; i < 3; i++) {
+              const ang = base + (Math.random() * 2 - 1) * 0.44;
+              const sp = 1.2 * (0.5 + Math.random());
+              pix.push({
+                x: mx, y: my,
+                vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+                t: 0, life: 40 + Math.random() * 20,
+                c: Math.random() < 0.62 ? ACC : ACC2,
+              });
+            }
+            if (pix.length > 260) pix.splice(0, pix.length - 260);
           }
-        } else {
-          lastX = mx; lastY = my;
         }
         const target = e.target as HTMLElement;
         const hoverTarget = target.closest?.("a,button,.clickable,input,.skilltile");
@@ -557,6 +600,26 @@ export default function Home() {
       };
       window.addEventListener("mousemove", onMove);
       cleanups.push(() => window.removeEventListener("mousemove", onMove));
+
+      let trailRaf = requestAnimationFrame(function loop() {
+        if (tctx) {
+          tctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+          for (let i = pix.length - 1; i >= 0; i--) {
+            const p = pix[i];
+            if (++p.t > p.life) { pix.splice(i, 1); continue; }
+            const k = p.t / p.life;
+            p.x += p.vx; p.y += p.vy;
+            p.vx *= 0.94; p.vy *= 0.94;
+            const s = k > 0.6 ? 3 : PIX;
+            tctx.globalAlpha = pixAlpha(k);
+            tctx.fillStyle = p.c;
+            tctx.fillRect(snapPix(p.x) - s / 2, snapPix(p.y) - s / 2, s, s);
+          }
+          tctx.globalAlpha = 1;
+        }
+        trailRaf = requestAnimationFrame(loop);
+      });
+      cleanups.push(() => cancelAnimationFrame(trailRaf));
     } else if (dot) {
       dot.style.display = "none";
     }
@@ -935,10 +998,148 @@ export default function Home() {
     };
   }, []);
 
+  // ---------- the contact finale scrub ----------
+  // Same contract as the prologue: one sticky stage, every value derived from scroll
+  // position. The loop only runs while the section is on screen — a warp field is far
+  // too expensive to leave spinning behind three other sections.
+  useEffect(() => {
+    const root = finaleRef.current;
+    const canvas = finaleFieldRef.current;
+    const galaxy = galaxyContactRef.current;
+    if (!root || !canvas || !galaxy) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const ctx = canvas.getContext("2d");
+    const { a: ACC, b: ACC2, w: WARN } = readAccents();
+    const beats = Array.from(root.querySelectorAll<HTMLElement>(".fbeat"));
+    const card = root.querySelector<HTMLElement>(".fcard");
+    const hud = root.querySelector<HTMLElement>(".fhud");
+    const hudVel = root.querySelector<HTMLElement>(".fhud .vel");
+    const hudSec = root.querySelector<HTMLElement>(".fhud .sec");
+
+    let W = window.innerWidth, H = window.innerHeight;
+    const fit = () => {
+      W = window.innerWidth; H = window.innerHeight;
+      fitCanvas(canvas, ctx, W, H);
+    };
+    fit();
+    window.addEventListener("resize", fit);
+
+    // stars in normalised camera space; z shrinking toward 0 is the camera flying into them
+    const field = Array.from({ length: 900 }, () => ({
+      x: Math.random() * 2 - 1,
+      y: Math.random() * 2 - 1,
+      z: Math.random() * 0.96 + 0.04,
+      c: Math.random() < 0.58 ? ACC2 : Math.random() < 0.8 ? ACC : WARN,
+    }));
+    const respawn = (s: (typeof field)[number], far: boolean) => {
+      s.x = Math.random() * 2 - 1;
+      s.y = Math.random() * 2 - 1;
+      s.z = far ? 1 : 0.04;
+    };
+
+    const clamp01 = (n: number) => (n < 0 ? 0 : n > 1 ? 1 : n);
+    const seg = (p: number, a: number, b: number) => clamp01((p - a) / (b - a));
+    const ease = (t: number) => t * t * (3 - 2 * t);
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+    const draw = () => {
+      const r = root.getBoundingClientRect();
+      const travel = r.height - H;
+      const p = travel > 0 ? clamp01(-r.top / travel) : 0;
+
+      const zoom = ease(seg(p, 0.13, 0.5)); // THE GALAXY is what enlarges
+      const rush = ease(seg(p, 0.3, 0.52)); // the field starts streaming past
+      const warp = ease(seg(p, 0.48, 0.6)) * (1 - ease(seg(p, 0.82, 0.93)));
+      const pullOut = ease(seg(p, 0.88, 1));
+
+      ctx?.clearRect(0, 0, W, H);
+      if (ctx && (rush > 0.02 || pullOut > 0)) {
+        const cx = W / 2, cy = H / 2;
+        // the retreat peaks mid-pull-out then settles into a slow held drift
+        const speed = warp * 0.052 + rush * 0.004 - pullOut * (1 - pullOut * 0.88) * 0.03;
+        const fov = lerp(0.55, 1.35, warp) * Math.min(W, H);
+        // the field dims as it settles so the contact card is the brightest thing left
+        const vis = clamp01(Math.max(rush * (1 - pullOut), warp) + pullOut * 0.4);
+        for (const s of field) {
+          s.z -= speed;
+          if (s.z <= 0.04) { respawn(s, true); continue; }
+          if (s.z > 1) { respawn(s, false); continue; }
+          const x1 = cx + (s.x / s.z) * fov, y1 = cy + (s.y / s.z) * fov;
+          if (x1 < -240 || x1 > W + 240 || y1 < -240 || y1 > H + 240) continue;
+          // the tail is where the star was ~10 frames ago, not one — a single frame's
+          // delta is a dot, and a warp made of dots reads as debris, not speed
+          const zTail = Math.min(1, s.z + Math.abs(speed) * 10);
+          const x0 = cx + (s.x / zTail) * fov, y0 = cy + (s.y / zTail) * fov;
+          const near = 1 - s.z;
+          // streaks are columns of lattice pixels, never smooth lines, so the finale and
+          // the cursor trail stay the same material
+          const n = Math.min(120, Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / PIX)));
+          ctx.fillStyle = s.c;
+          for (let i = 0; i < n; i++) {
+            const t = i / n;
+            const sz = t < 0.3 ? 6 : t < 0.7 ? 4 : 3;
+            ctx.globalAlpha = pixAlpha(t) * (0.35 + 0.65 * near) * vis;
+            ctx.fillRect(snapPix(lerp(x1, x0, t)) - sz / 2, snapPix(lerp(y1, y0, t)) - sz / 2, sz, sz);
+          }
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // exponential, so it reads as approach rather than a linear CSS scale-up
+      const gScale = Math.pow(46, zoom);
+      galaxy.style.transform = `translate(-50%,-50%) scale(${gScale.toFixed(3)})`;
+      galaxy.style.opacity = (ease(seg(p, 0, 0.08)) * 0.85 * (1 - ease(seg(p, 0.4, 0.52)))).toFixed(3);
+      // filter runs before transform, so a plain blur value gets multiplied by the scale
+      // and smears the galaxy into soup — divide it back out to keep it constant on screen
+      galaxy.style.filter = zoom > 0.3 ? `blur(${(((zoom - 0.3) * 11) / gScale).toFixed(3)}px)` : "none";
+
+      beats.forEach((el, i) => {
+        const o = clamp01(1 - Math.abs(p - FINALE_BEATS[i].at) / FINALE_BEAT_SPAN);
+        el.style.opacity = (o * o).toFixed(3);
+        el.style.transform = `scale(${lerp(0.94, 1, o).toFixed(3)})`;
+      });
+
+      const fin = ease(seg(p, 0.9, 0.995));
+      if (card) {
+        card.style.opacity = fin.toFixed(3);
+        card.style.transform = `translateY(${lerp(26, 0, fin).toFixed(1)}px)`;
+        card.style.pointerEvents = fin > 0.6 ? "auto" : "none";
+      }
+      hud?.classList.toggle("in", p > 0.06 && p < 0.995);
+      if (hudVel) hudVel.textContent = (warp * 0.94 + rush * 0.1 * (1 - pullOut)).toFixed(2);
+      if (hudSec) hudSec.textContent = String(Math.round(p * 12)).padStart(2, "0");
+    };
+
+    let raf = 0;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting && !raf) {
+          raf = requestAnimationFrame(function loop() {
+            draw();
+            raf = requestAnimationFrame(loop);
+          });
+        } else if (!e.isIntersecting && raf) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+      },
+      { threshold: 0 }
+    );
+    io.observe(root);
+    draw();
+
+    return () => {
+      io.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("resize", fit);
+    };
+  }, []);
+
   return (
     <>
       <div id="cursor-dot" ref={cursorDotRef} aria-hidden="true" />
-      <div id="cursorTrail" ref={cursorTrailRef} aria-hidden="true" />
+      <canvas id="cursorTrail" ref={cursorTrailRef} aria-hidden="true" />
       <canvas id="starfield" ref={starfieldRef} aria-hidden="true" />
       <div className="pagedots">
         {PAGES.map((p) => (
@@ -950,9 +1151,7 @@ export default function Home() {
             ref={(el) => {
               pagedotRefs.current[p.id] = el;
             }}
-            onClick={() =>
-              document.getElementById(p.id)?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" })
-            }
+            onClick={() => jumpToSection(p.id, !reducedRef.current)}
           />
         ))}
       </div>
@@ -1008,6 +1207,7 @@ export default function Home() {
                 ref={(el) => {
                   navLinkRefs.current[n.id] = el;
                 }}
+                onClick={(e) => { e.preventDefault(); jumpToSection(n.id, !reducedRef.current); }}
               >
                 {n.label}
               </a>
@@ -1017,7 +1217,13 @@ export default function Home() {
             <button className="kbd-hint clickable" type="button" aria-label="Open command palette" onClick={() => setPaletteOpen(true)}>
               <span>{modKey}</span>K
             </button>
-            <a className="btn solid" href="#contact">Get in touch</a>
+            <a
+              className="btn solid"
+              href="#contact"
+              onClick={(e) => { e.preventDefault(); jumpToSection("contact", !reducedRef.current); }}
+            >
+              Get in touch
+            </a>
           </div>
         </div>
       </nav>
@@ -1471,15 +1677,37 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="contact" className="contact">
-        <div className="pf-wrap">
-          <pre className="ascii-art ascii-float reveal" aria-hidden="true" style={{ width: `${GALAXY_COLS}ch` }} ref={galaxyContactRef} />
-          <h2 className="reveal">Let&apos;s build something.</h2>
-          <div className="term-flavor reveal"><span className="p">guest@mark-ramos:~$</span> contact --send</div>
-          <div className="row">
-            <a className="btn solid reveal clickable" href={`mailto:${EMAIL}`}>{EMAIL}</a>
-            <a className="btn reveal clickable" href={GITHUB} target="_blank" rel="noreferrer"><FaGithub /> GitHub</a>
-            <a className="btn reveal clickable" href={LINKEDIN} target="_blank" rel="noreferrer"><FaLinkedinIn /> LinkedIn</a>
+      {/* The finale: the galaxy that has been idling since the boot terminal finally
+          rushes the camera, and the site exits through it into the contact card.
+          Deliberately no `reveal` classes in here — the scrub owns every opacity. */}
+      <section id="contact" className="contact" ref={finaleRef}>
+        <div className="fstage">
+          <canvas id="finaleField" ref={finaleFieldRef} aria-hidden="true" />
+          {/* deliberately not .ascii-art: that paints the glyphs as transparent-on-gradient,
+              which at 46x scale leaves nothing but smeared text-shadow */}
+          <pre className="fgalaxy" aria-hidden="true" style={{ width: `${GALAXY_COLS}ch` }} ref={galaxyContactRef} />
+
+          {FINALE_BEATS.map((b) => (
+            <div className="fbeat" key={b.h} data-at={b.at}>
+              <h2>{b.h}</h2>
+              <p>{b.s}</p>
+            </div>
+          ))}
+
+          <div className="fcard">
+            <h2>Let&apos;s build something <em>extraordinary</em>.</h2>
+            <div className="term-flavor"><span className="p">guest@mark-ramos:~$</span> contact --send</div>
+            <div className="row">
+              <a className="btn solid clickable" href={`mailto:${EMAIL}`}>{EMAIL}</a>
+              <a className="btn clickable" href={GITHUB} target="_blank" rel="noreferrer"><FaGithub /> GitHub</a>
+              <a className="btn clickable" href={LINKEDIN} target="_blank" rel="noreferrer"><FaLinkedinIn /> LinkedIn</a>
+            </div>
+          </div>
+
+          <div className="fhud" aria-hidden="true">
+            <span className="tl">MARK RAMOS · DAVAO CITY</span>
+            <span className="tr">SECTOR <b className="sec">00</b></span>
+            <span className="br">VEL <b className="vel">0.00</b>c</span>
           </div>
         </div>
       </section>

@@ -47,13 +47,10 @@ button, input { font-family:inherit; color:inherit; }
 #cursor-dot.hover { width:12px; height:12px; margin:-6px 0 0 -6px; background:var(--accent); }
 @media (pointer:coarse){ #cursor-dot{ display:none; } body,a,button,.clickable,input{ cursor:auto; } }
 
-/* cursor comet trail — cone-shaped: each glyph drifts outward+back along --ex/--ey as it fades */
-#cursorTrail { position:fixed; inset:0; z-index:9998; pointer-events:none; overflow:hidden; }
-.trail-glyph { position:fixed; top:0; left:0; font-family:var(--mono); font-weight:700; font-size:13px; line-height:1; animation:trail-fade .75s ease-out forwards; text-shadow:0 0 8px currentColor; }
-@keyframes trail-fade {
-  0%{ opacity:.85; transform:translate(-50%,-50%) scale(1); }
-  100%{ opacity:0; transform:translate(calc(-50% + var(--ex,0px)), calc(-50% + var(--ey,0px))) scale(.3); }
-}
+/* cursor comet trail — pixels sprayed into a cone behind the pointer, snapped to a 6px
+   lattice and faded in four hard steps (sprite art, not glow). Canvas, not DOM nodes:
+   the cone needs a couple hundred live particles and a node each would thrash layout. */
+#cursorTrail { position:fixed; inset:0; z-index:9998; pointer-events:none; width:100%; height:100%; }
 
 /* nav */
 .pf-nav { position:sticky; top:0; z-index:20; backdrop-filter:blur(10px); background:rgba(10,13,20,.72); border-bottom:1px solid var(--border); }
@@ -300,15 +297,41 @@ button, input { font-family:inherit; color:inherit; }
 .skilltile .nm { position:relative; z-index:1; font-size:13.5px; color:var(--muted); text-align:center; }
 .skilltile:hover .nm { color:var(--text); }
 
-/* contact */
-.contact { text-align:center; padding:96px 0; min-height:100vh; display:flex; flex-direction:column; justify-content:center; scroll-snap-align:start; }
-.ascii-art.ascii-float { width:fit-content; margin:0 auto 20px; font-size:13px; animation:ascii-bob 4s ease-in-out infinite; }
-@keyframes ascii-bob { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
-.contact h2 { font-size:40px; font-weight:800; letter-spacing:-1px; margin:0; }
-.contact .term-flavor { font-family:var(--mono); font-size:13px; color:var(--dim); margin:16px 0 28px; }
-.contact .term-flavor .p { color:var(--accent2); }
-.contact p:not(.term-flavor) { color:var(--muted); font-size:18px; margin:16px 0 30px; }
-.contact .row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+/* contact finale — one tall scrubbed section over a single sticky stage: the ascii galaxy
+   rushes the camera, tears open into a pixel warp field, three lines land, the camera
+   settles into a slow drift, and contact resolves. Every value derives from scroll
+   position, so scrolling back up replays it in reverse for free. */
+.contact { position:relative; height:700vh; scroll-snap-align:start; }
+.fstage { position:sticky; top:0; height:100vh; overflow:hidden; }
+#finaleField { position:absolute; inset:0; width:100%; height:100%; }
+.fgalaxy { position:absolute; left:50%; top:50%; margin:0; font-family:var(--mono); font-size:13px; line-height:1.05; white-space:pre; user-select:none; color:var(--accent); transform-origin:50% 50%; pointer-events:none; will-change:transform,opacity; }
+.fbeat { position:absolute; left:50%; top:50%; width:min(1100px,88vw); translate:-50% -50%; text-align:center; pointer-events:none; opacity:0; will-change:opacity,transform; }
+.fbeat h2 { font-size:clamp(38px,8vw,104px); font-weight:900; letter-spacing:-.045em; line-height:.9; margin:0; text-transform:uppercase; text-wrap:balance; }
+.fbeat p { font-family:var(--mono); font-size:clamp(11px,1.3vw,14px); letter-spacing:.2em; text-transform:uppercase; color:var(--accent2); margin:18px 0 0; }
+.fcard { position:absolute; left:50%; top:50%; width:min(880px,90vw); translate:-50% -50%; text-align:center; opacity:0; pointer-events:none; will-change:opacity,transform; }
+.fcard h2 { font-size:clamp(34px,6vw,68px); font-weight:800; letter-spacing:-.035em; line-height:1.04; margin:0 0 18px; text-wrap:balance; }
+.fcard h2 em { font-style:normal; color:var(--accent); }
+.fcard .term-flavor { font-family:var(--mono); font-size:13px; color:var(--dim2); margin:0 0 28px; }
+.fcard .term-flavor .p { color:var(--accent2); }
+.fcard .row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+/* flight instruments — the reference's HUD, kept in this site's terminal voice */
+.fhud { position:absolute; inset:0; pointer-events:none; font-family:var(--mono); font-size:11px; color:var(--dim); letter-spacing:.08em; opacity:0; transition:opacity .4s var(--ease); }
+.fhud.in { opacity:1; }
+.fhud span { position:absolute; }
+.fhud .tl { left:22px; top:calc(var(--nav-h) + 16px); }
+.fhud .tr { right:52px; top:calc(var(--nav-h) + 16px); }
+.fhud .br { right:52px; bottom:24px; font-variant-numeric:tabular-nums; }
+.fhud b { color:var(--accent2); font-weight:400; }
+@media (max-width:760px){ .contact{ height:420vh; } }
+/* Must sit after the rules above, not up with the other reduced-motion overrides —
+   same specificity, so source order is the only thing that decides. */
+@media (prefers-reduced-motion:reduce){
+  .contact{ height:auto; }
+  .fstage{ position:static; height:auto; display:grid; justify-items:center; gap:34px; padding:96px 0; }
+  #finaleField, .fhud{ display:none; }
+  .fgalaxy, .fbeat, .fcard{ position:static; left:auto; top:auto; translate:none; transform:none !important; opacity:1 !important; pointer-events:auto !important; }
+  .fbeat h2{ font-size:clamp(28px,5vw,52px); }
+}
 .pf-footer { border-top:1px solid var(--border); padding:26px 0; text-align:center; color:var(--dim); font-family:var(--mono); font-size:12px; }
 
 /* lightbox */
