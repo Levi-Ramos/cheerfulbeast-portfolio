@@ -120,40 +120,100 @@ const fitCanvas = (c: HTMLCanvasElement, ctx: CanvasRenderingContext2D | null, w
   ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
 };
 
-// rotating ascii galaxy — a fixed-size character grid so every animation frame renders
-// at the exact same width/height (no layout jitter), driven into a <pre> via ref + interval
-const GALAXY_COLS = 34;
-const GALAXY_ROWS = 15;
+// Rotating galaxy, drawn on the same 6px lattice as everything else. Two notes carried
+// over from the character-grid version it replaces:
+//   - the old renderer flattened y by .5 to cancel the aspect of a monospace cell. Square
+//     pixels have no such distortion to cancel, so that .5 became a mild tilt instead.
+//   - 2.6 radians of winding was legible across 34 columns of glyphs; at pixel resolution
+//     it is too loose to read as arms at all, hence 4.4 with the scatter halved.
 const GALAXY_ARMS = 3;
-const GALAXY_STAR_COUNT = 130;
-const GALAXY_CHARS = [" ", ".", ":", "+", "*", "#"];
+// Sized for the finale: by the time it has zoomed 30x, only the stars inside a few
+// hundred px of the core are still on screen, so the field has to be dense enough that
+// that slice still reads as a galaxy. The boot terminal samples a prefix of the same list.
+const GALAXY_STAR_COUNT = 5200;
+// The terminal's galaxy is ~37x25 cells; more than a few hundred stars saturates
+// every cell and the spiral collapses into a solid blob.
+const GALAXY_GATE_STARS = 420;
+const GALAXY_WIND = 4.4;
+const GALAXY_SCATTER = 0.5;
+const GALAXY_FLATTEN = 0.66;
+type GalaxyStar = { r: number; a0: number; spin: number };
 
-function buildGalaxyStars() {
-  const stars: { r: number; a0: number; spin: number }[] = [];
+function buildGalaxyStars(): GalaxyStar[] {
+  const stars: GalaxyStar[] = [];
   for (let i = 0; i < GALAXY_STAR_COUNT; i++) {
     const t = Math.random(); // 0 = core, 1 = rim
     const arm = i % GALAXY_ARMS;
     // arm base angle + spiral winding + scatter that loosens further from the core
-    const a0 = (arm / GALAXY_ARMS) * Math.PI * 2 + t * 2.6 + (Math.random() - 0.5) * (0.25 + t * 0.5);
+    const a0 =
+      (arm / GALAXY_ARMS) * Math.PI * 2 + t * GALAXY_WIND + (Math.random() - 0.5) * (0.25 + t * 0.5) * GALAXY_SCATTER;
     stars.push({ r: t, a0, spin: 0.6 + (1 - t) * 1.0 }); // inner stars spin faster, like a real galaxy
   }
   return stars;
 }
-function renderGalaxyFrame(stars: { r: number; a0: number; spin: number }[], angle: number) {
-  const grid = Array.from({ length: GALAXY_ROWS }, () => Array(GALAXY_COLS).fill(" "));
-  const cx = (GALAXY_COLS - 1) / 2, cy = (GALAXY_ROWS - 1) / 2;
-  const maxR = Math.min(GALAXY_COLS / 2, GALAXY_ROWS) * 0.9;
-  stars.forEach((s) => {
+
+// Accumulating into lattice cells is what the character grid did by keeping the brightest
+// glyph per cell: overlapping arms read as denser rather than just repainting the same spot.
+// The buffer is kept across calls — this runs every frame during the finale's zoom.
+let galaxyAcc: Float32Array | null = null;
+let galaxyTouched: Int32Array | null = null;
+let galaxyStamp: Int32Array | null = null;
+let galaxyGen = 0;
+function paintGalaxy(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  stars: GalaxyStar[],
+  angle: number,
+  radius: number,
+  alpha: number,
+  core: string,
+  rim: string,
+) {
+  const cols = Math.ceil(w / PIX), rows = Math.ceil(h / PIX);
+  const need = cols * rows;
+  if (!galaxyAcc || galaxyAcc.length < need) {
+    galaxyAcc = new Float32Array(need);
+    galaxyTouched = new Int32Array(need);
+    galaxyStamp = new Int32Array(need);
+    galaxyGen = 0;
+  }
+  const acc = galaxyAcc, touched = galaxyTouched!, stamp = galaxyStamp!;
+  // A generation stamp instead of clearing and rescanning the whole grid: at full screen
+  // that is 36,000 cells a frame to find the few thousand a star actually landed in, and
+  // this runs every frame while the finale zooms.
+  const gen = ++galaxyGen;
+  let n = 0;
+
+  const cx = w / 2, cy = h / 2;
+  const mark = (idx: number, weight: number) => {
+    if (stamp[idx] !== gen) { stamp[idx] = gen; acc[idx] = 0; touched[n++] = idx; }
+    acc[idx] += weight;
+  };
+  for (const s of stars) {
     const a = s.a0 + angle * s.spin;
-    const rr = s.r * maxR;
-    const x = Math.round(cx + Math.cos(a) * rr);
-    const y = Math.round(cy + Math.sin(a) * rr * 0.5); // flatten for monospace character aspect
-    if (x < 0 || x >= GALAXY_COLS || y < 0 || y >= GALAXY_ROWS) return;
-    const idx = Math.min(GALAXY_CHARS.length - 1, Math.floor((1 - s.r) * (GALAXY_CHARS.length - 1)) + 1);
-    if (GALAXY_CHARS.indexOf(grid[y][x]) < idx) grid[y][x] = GALAXY_CHARS[idx];
-  });
-  grid[Math.round(cy)][Math.round(cx)] = GALAXY_CHARS[GALAXY_CHARS.length - 1]; // bright core nucleus
-  return grid.map((row) => row.join("")).join("\n");
+    const rr = s.r * radius;
+    const gx = ((cx + Math.cos(a) * rr) / PIX) | 0;
+    const gy = ((cy + Math.sin(a) * rr * GALAXY_FLATTEN) / PIX) | 0;
+    if (gx < 0 || gx >= cols || gy < 0 || gy >= rows) continue;
+    mark(gy * cols + gx, 1 - s.r * 0.7); // inner stars weigh more
+  }
+  mark(((cy / PIX) | 0) * cols + ((cx / PIX) | 0), 3); // the nucleus
+
+  for (let i = 0; i < n; i++) {
+    const idx = touched[i];
+    const v = acc[idx];
+    if (v <= 0) continue;
+    // a lone star in a cell still has to be clearly visible, or only the core reads
+    const lv = Math.min(3, Math.max(0, 2 - (v | 0)));
+    const x = (idx % cols) * PIX, y = ((idx / cols) | 0) * PIX;
+    const d = Math.hypot((x - cx) / radius, (y - cy) / (radius * GALAXY_FLATTEN));
+    ctx.globalAlpha = PIX_STEPS[lv] * alpha;
+    ctx.fillStyle = d < 0.42 ? core : rim;
+    const size = lv > 1 ? PIX - 2 : PIX; // dim cells shrink, so the rim frays
+    ctx.fillRect(x, y, size, size);
+  }
+  ctx.globalAlpha = 1;
 }
 
 // The finale is a tall scrubbed section whose contact card only exists at the very bottom,
@@ -216,8 +276,9 @@ export default function Home() {
   const projectRefs = useRef<(HTMLElement | null)[]>([]);
   const [projTab, setProjTab] = useState<"work" | "personal">("personal");
   const [lens, setLens] = useState<Lens | "all">("all");
-  const galaxyGateRef = useRef<HTMLPreElement>(null);
-  const galaxyContactRef = useRef<HTMLPreElement>(null);
+  const galaxyGateRef = useRef<HTMLCanvasElement>(null);
+  const galaxyStarsRef = useRef<GalaxyStar[]>([]);
+  const galaxyAngleRef = useRef(0);
   const finaleRef = useRef<HTMLElement>(null);
   const finaleFieldRef = useRef<HTMLCanvasElement>(null);
   const nudgeRef = useRef<HTMLDivElement>(null);
@@ -770,20 +831,29 @@ export default function Home() {
       }
     }
 
-    // rotating ascii galaxy — a fixed-width character-grid animation, same frame driven
-    // into both the boot terminal (neofetch-style) and the contact mascot, kept in sync
-    const galaxyStars = buildGalaxyStars();
-    let galaxyAngle = 0;
-    const renderGalaxy = () => {
-      const frame = renderGalaxyFrame(galaxyStars, galaxyAngle);
-      if (galaxyGateRef.current) galaxyGateRef.current.textContent = frame;
-      if (galaxyContactRef.current) galaxyContactRef.current.textContent = frame;
+    // The galaxy's rotation lives here so the boot terminal and the finale stay in step.
+    // The terminal repaints on the interval; the finale reads the same angle from its own
+    // loop, because it has to redraw every frame while it zooms.
+    galaxyStarsRef.current = buildGalaxyStars();
+    const gateStars = galaxyStarsRef.current.slice(0, GALAXY_GATE_STARS);
+    const gxyColors = readAccents();
+    const paintGate = () => {
+      const el = galaxyGateRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (!r.width) return;
+      const gctx = el.getContext("2d");
+      fitCanvas(el, gctx, r.width, r.height);
+      if (!gctx) return;
+      gctx.clearRect(0, 0, r.width, r.height);
+      paintGalaxy(gctx, r.width, r.height, gateStars, galaxyAngleRef.current,
+        Math.min(r.width, r.height / GALAXY_FLATTEN) * 0.46, 1, gxyColors.a, gxyColors.b);
     };
-    renderGalaxy();
+    paintGate();
     if (!reduced) {
       const galaxyIv = setInterval(() => {
-        galaxyAngle += 0.045;
-        renderGalaxy();
+        galaxyAngleRef.current += 0.045;
+        paintGate();
       }, 130);
       cleanups.push(() => clearInterval(galaxyIv));
     }
@@ -1153,8 +1223,7 @@ export default function Home() {
   useEffect(() => {
     const root = finaleRef.current;
     const canvas = finaleFieldRef.current;
-    const galaxy = galaxyContactRef.current;
-    if (!root || !canvas || !galaxy) return;
+    if (!root || !canvas) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const ctx = canvas.getContext("2d");
@@ -1212,6 +1281,17 @@ export default function Home() {
       const pullOut = ease(seg(p, 0.93, 1));
 
       ctx?.clearRect(0, 0, W, H);
+
+      // The galaxy shares the field's canvas and is REDRAWN at each scale rather than
+      // magnified. Its pixels stay 6px the whole way, so approaching it resolves the
+      // spiral — arms separate, stars appear between the old ones — instead of blowing
+      // one image up into a handful of enormous blocks.
+      const gAlpha = ease(seg(p, 0, 0.05)) * 0.9 * (1 - ease(seg(p, 0.24, 0.33)));
+      if (ctx && gAlpha > 0.004) {
+        paintGalaxy(ctx, W, H, galaxyStarsRef.current, galaxyAngleRef.current,
+          Math.min(W, H / GALAXY_FLATTEN) * 0.22 * Math.pow(34, zoom), gAlpha, ACC, ACC2);
+      }
+
       if (ctx && (rush > 0.02 || pullOut > 0)) {
         const cx = W / 2, cy = H / 2;
         // the retreat peaks mid-pull-out then settles into a slow held drift
@@ -1247,23 +1327,6 @@ export default function Home() {
           }
         }
         ctx.globalAlpha = 1;
-      }
-
-      // A scaled <pre> is a real composited layer: at 30x it is ~8000px across and costs
-      // a whole frame budget to raster, even at zero opacity. Take it out of the tree the
-      // moment it stops being visible — for most of the section that is the whole cost.
-      const gAlpha = ease(seg(p, 0, 0.05)) * 0.85 * (1 - ease(seg(p, 0.24, 0.33)));
-      if (gAlpha < 0.005) {
-        galaxy.style.display = "none";
-      } else {
-        // exponential, so it reads as approach rather than a linear CSS scale-up
-        const gScale = Math.pow(30, zoom);
-        galaxy.style.display = "";
-        galaxy.style.opacity = gAlpha.toFixed(3);
-        galaxy.style.transform = `translate(-50%,-50%) scale(${gScale.toFixed(3)})`;
-        // filter runs before transform, so a plain blur gets multiplied by the scale and
-        // smears the galaxy into soup — divide it back out to keep it constant on screen
-        galaxy.style.filter = zoom > 0.3 ? `blur(${(((zoom - 0.3) * 11) / gScale).toFixed(3)}px)` : "none";
       }
 
       beats.forEach((el, i) => {
@@ -1345,7 +1408,7 @@ export default function Home() {
           </div>
           <div className="term-body">
             <div className="neofetch">
-              <pre className="ascii-art" aria-hidden="true" style={{ width: `${GALAXY_COLS}ch` }} ref={galaxyGateRef} />
+              <canvas className="gxy-gate" aria-hidden="true" ref={galaxyGateRef} />
               <div className="neofetch-info">
                 <div ref={gateBootRef} />
                 {gateMenuShown && (
@@ -1863,9 +1926,6 @@ export default function Home() {
       <section id="contact" className="contact" ref={finaleRef}>
         <div className="fstage">
           <canvas id="finaleField" ref={finaleFieldRef} aria-hidden="true" />
-          {/* deliberately not .ascii-art: that paints the glyphs as transparent-on-gradient,
-              which at 46x scale leaves nothing but smeared text-shadow */}
-          <pre className="fgalaxy" aria-hidden="true" style={{ width: `${GALAXY_COLS}ch` }} ref={galaxyContactRef} />
 
           {FINALE_BEATS.map((b) => (
             <div className="fbeat" key={b.h}>

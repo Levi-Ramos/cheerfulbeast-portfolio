@@ -339,10 +339,8 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
 .contact { position:relative; height:1000vh; }
 .fstage { position:sticky; top:0; height:100vh; overflow:hidden; }
 #finaleField { position:absolute; inset:0; width:100%; height:100%; }
-.fgalaxy { position:absolute; left:50%; top:50%; margin:0; font-family:var(--mono); font-size:13px; line-height:1.05; white-space:pre; user-select:none; color:var(--accent); transform-origin:50% 50%; pointer-events:none; }
-/* deliberately no will-change: this element scales past 8000px wide, and promoting it
-   makes the browser cache a texture that large. Without it, rasterising at composited
-   size each frame is far cheaper — it was the difference between 30 and 60fps. */
+/* The galaxy now shares #finaleField's canvas and is redrawn at each zoom level rather
+   than being a scaled element, so there is nothing to position or promote here at all. */
 .fbeat { position:absolute; left:50%; top:50%; width:min(1100px,88vw); translate:-50% -50%; text-align:center; pointer-events:none; opacity:0; will-change:opacity,transform; }
 .fbeat h2 { font-size:clamp(38px,8vw,104px); font-weight:900; letter-spacing:-.045em; line-height:.9; margin:0; text-transform:uppercase; text-wrap:balance; }
 .fbeat p { font-family:var(--mono); font-size:clamp(11px,1.3vw,14px); letter-spacing:.2em; text-transform:uppercase; color:var(--accent2); margin:18px 0 0; }
@@ -370,7 +368,7 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
   .contact{ height:auto; }
   .fstage{ position:static; height:auto; display:grid; justify-items:center; gap:34px; padding:96px 0; }
   #finaleField, .fhud{ display:none; }
-  .fgalaxy, .fbeat, .fcard, .fstage .pf-footer{ position:static; left:auto; top:auto; translate:none; transform:none !important; opacity:1 !important; pointer-events:auto !important; }
+  .fbeat, .fcard, .fstage .pf-footer{ position:static; left:auto; top:auto; translate:none; transform:none !important; opacity:1 !important; pointer-events:auto !important; }
   .fstage .pf-footer{ width:100%; background:none; }
   .fbeat h2{ font-size:clamp(28px,5vw,52px); }
 }
@@ -437,8 +435,7 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
 .gate-term .term-body { flex:1; display:flex; flex-direction:column; justify-content:center; max-height:none; min-height:0; padding:40px clamp(24px,7vw,120px); font-size:15px; line-height:1.9; }
 .neofetch { display:flex; align-items:center; gap:clamp(24px,4vw,56px); }
 .neofetch-info { flex:1; min-width:0; }
-.ascii-art { flex:none; margin:0; font-family:var(--mono); white-space:pre; line-height:1.05; user-select:none; background:linear-gradient(160deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
-.neofetch .ascii-art { font-size:11px; }
+.gxy-gate { flex:none; display:block; width:224px; height:150px; }
 .gate-menu { margin-top:10px; }
 .gate-item { display:flex; align-items:center; gap:10px; padding:6px 0; color:var(--muted); transition:color .12s; font-size:15px; }
 .gate-item .marker { color:var(--accent); width:16px; display:inline-block; }
@@ -454,7 +451,7 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
 @media (max-width:960px){
   .terminal{ max-width:560px; }
   .pagedots{ display:none; }
-  .neofetch .ascii-art{ display:none; }
+  .gxy-gate{ display:none; }
 }
 @media (max-width:760px){
   .hero-resolve h1{ font-size:36px; }
