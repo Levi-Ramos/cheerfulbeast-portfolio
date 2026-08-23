@@ -76,6 +76,43 @@ const readAccents = () => {
   const v = (n: string, fallback: string) => css.getPropertyValue(n).trim() || fallback;
   return { a: v("--accent", "#4ade80"), b: v("--accent2", "#22d3ee"), w: v("--warn", "#e0af68") };
 };
+// 4x4 ordered dither — the classic Bayer threshold matrix
+const BAYER = [
+  [0, 8, 2, 10],
+  [12, 4, 14, 6],
+  [3, 11, 1, 9],
+  [15, 7, 13, 5],
+];
+
+// The aurora orbs, as lattice pixels rather than a smooth CSS gradient, so the ambient
+// layer speaks the same language as the cursor trail and the finale. Quantised to the same
+// four opacity steps, with the dither shifting each cell up or down a step — without it the
+// steps form visible concentric rings. Painted once: the parallax is still a CSS transform,
+// so this costs nothing per frame. Each orb keeps its own local lattice, which is the point
+// — a globally aligned grid would break the moment they translate anyway.
+function paintOrb(canvas: HTMLCanvasElement, color: string) {
+  const r = canvas.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const ctx = canvas.getContext("2d");
+  fitCanvas(canvas, ctx, r.width, r.height);
+  if (!ctx) return;
+  ctx.fillStyle = color;
+  const cx = r.width / 2, cy = r.height / 2, R = Math.min(cx, cy);
+  for (let y = 0; y < r.height; y += PIX) {
+    const row = BAYER[((y / PIX) | 0) % 4];
+    for (let x = 0; x < r.width; x += PIX) {
+      const d = Math.hypot((x - cx) / R, (y - cy) / R);
+      if (d >= 1) continue;
+      const v = (1 - d) * (1 - d); // hold the core, dissolve the rim
+      const lv = Math.floor(v * 4 + row[((x / PIX) | 0) % 4] / 16);
+      if (lv <= 0) continue;
+      ctx.globalAlpha = PIX_STEPS[Math.max(0, 4 - lv)];
+      ctx.fillRect(x, y, PIX, PIX);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
 const fitCanvas = (c: HTMLCanvasElement, ctx: CanvasRenderingContext2D | null, w: number, h: number) => {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   c.width = w * dpr;
@@ -169,8 +206,8 @@ export default function Home() {
   const cursorDotRef = useRef<HTMLDivElement>(null);
   const cursorTrailRef = useRef<HTMLCanvasElement>(null);
   const starfieldRef = useRef<HTMLCanvasElement>(null);
-  const a1Ref = useRef<HTMLDivElement>(null);
-  const a2Ref = useRef<HTMLDivElement>(null);
+  const a1Ref = useRef<HTMLCanvasElement>(null);
+  const a2Ref = useRef<HTMLCanvasElement>(null);
   const navIndicatorRef = useRef<HTMLSpanElement>(null);
   const navlinksElRef = useRef<HTMLDivElement>(null);
   const navLinkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
@@ -750,6 +787,16 @@ export default function Home() {
       }, 130);
       cleanups.push(() => clearInterval(galaxyIv));
     }
+
+    // the dithered orbs — painted once here, then only ever moved by transform below
+    const orbColors = readAccents();
+    const repaintOrbs = () => {
+      if (a1Ref.current) paintOrb(a1Ref.current, orbColors.b);
+      if (a2Ref.current) paintOrb(a2Ref.current, orbColors.a);
+    };
+    repaintOrbs();
+    window.addEventListener("resize", repaintOrbs);
+    cleanups.push(() => window.removeEventListener("resize", repaintOrbs));
 
     // parallax aurora
     const heroEl = prologueRef.current;
@@ -1365,8 +1412,8 @@ export default function Home() {
           Scrolling back up replays it, because every value is derived from position. */}
       <header className="prologue" id="top" ref={prologueRef}>
         <div className="pstage">
-          <div className="aurora a1" ref={a1Ref} />
-          <div className="aurora a2" ref={a2Ref} />
+          <canvas className="aurora a1" ref={a1Ref} aria-hidden="true" />
+          <canvas className="aurora a2" ref={a2Ref} aria-hidden="true" />
 
           {/* 01 — who */}
           <div className="beat" data-beat="0">
