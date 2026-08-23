@@ -183,6 +183,7 @@ export default function Home() {
   const galaxyContactRef = useRef<HTMLPreElement>(null);
   const finaleRef = useRef<HTMLElement>(null);
   const finaleFieldRef = useRef<HTMLCanvasElement>(null);
+  const nudgeRef = useRef<HTMLDivElement>(null);
 
   // mutable flags that shouldn't trigger re-renders
   const gateOpenRef = useRef(true);
@@ -1012,6 +1013,92 @@ export default function Home() {
     };
   }, []);
 
+  // ---------- the scroll nudge ----------
+  // Stands in for the page's native scrollbar, which is hidden (see globals.css). Still a
+  // real scrollbar: it tracks position, sizes to the document, and drags.
+  useEffect(() => {
+    const el = nudgeRef.current;
+    const thumb = el?.firstElementChild as HTMLElement | null;
+    if (!el || !thumb) return;
+
+    const GAP = 5; // breathing room at the top and bottom of the travel
+    let thumbH = 44, travel = 0, maxScroll = 0;
+
+    const measure = () => {
+      const vh = window.innerHeight;
+      const doc = document.documentElement.scrollHeight;
+      maxScroll = doc - vh;
+      if (maxScroll <= 1) {
+        el.classList.remove("on");
+        return false;
+      }
+      thumbH = Math.max(44, (vh / doc) * vh);
+      travel = vh - thumbH - GAP * 2;
+      thumb.style.height = `${Math.round(thumbH)}px`;
+      el.classList.add("on");
+      return true;
+    };
+    const place = () => {
+      if (maxScroll <= 1) return;
+      const y = GAP + Math.min(1, Math.max(0, window.scrollY / maxScroll)) * travel;
+      thumb.style.transform = `translateY(${y.toFixed(1)}px)`;
+    };
+    const sync = () => { if (measure()) place(); };
+
+    let queued = false;
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => { place(); queued = false; });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    // reveal animations and the finale change the document height as you go
+    const ro = new ResizeObserver(sync);
+    ro.observe(document.body);
+    // the gate, lightbox and palette lock body scroll — a native scrollbar disappears when
+    // that happens, so this one does too rather than floating over the modal
+    const lockObserver = new MutationObserver(() => {
+      el.classList.toggle("locked", document.body.style.overflow === "hidden");
+    });
+    lockObserver.observe(document.body, { attributes: true, attributeFilter: ["style"] });
+    el.classList.toggle("locked", document.body.style.overflow === "hidden");
+    sync();
+
+    let grab = 0;
+    const onMove = (e: PointerEvent) => {
+      const top = Math.min(travel, Math.max(0, e.clientY - grab - GAP));
+      // instant, not smooth: html sets scroll-behavior:smooth, and a dragged thumb that
+      // eases toward every intermediate position feels like it is stuck in treacle
+      window.scrollTo({ top: (top / travel) * maxScroll, behavior: "instant" });
+    };
+    const onUp = (e: PointerEvent) => {
+      el.classList.remove("dragging");
+      thumb.releasePointerCapture(e.pointerId);
+      thumb.removeEventListener("pointermove", onMove);
+    };
+    const onDown = (e: PointerEvent) => {
+      if (!measure()) return;
+      grab = e.clientY - thumb.getBoundingClientRect().top;
+      el.classList.add("dragging");
+      thumb.setPointerCapture(e.pointerId);
+      thumb.addEventListener("pointermove", onMove);
+      e.preventDefault();
+    };
+    thumb.addEventListener("pointerdown", onDown);
+    thumb.addEventListener("pointerup", onUp);
+    thumb.addEventListener("pointercancel", onUp);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      ro.disconnect();
+      lockObserver.disconnect();
+      thumb.removeEventListener("pointerdown", onDown);
+      thumb.removeEventListener("pointerup", onUp);
+      thumb.removeEventListener("pointercancel", onUp);
+      thumb.removeEventListener("pointermove", onMove);
+    };
+  }, []);
+
   // ---------- the contact finale scrub ----------
   // Same contract as the prologue: one sticky stage, every value derived from scroll
   // position. The loop only runs while the section is on screen — a warp field is far
@@ -1027,6 +1114,7 @@ export default function Home() {
     const { a: ACC, b: ACC2, w: WARN } = readAccents();
     const beats = Array.from(root.querySelectorAll<HTMLElement>(".fbeat"));
     const card = root.querySelector<HTMLElement>(".fcard");
+    const footer = root.querySelector<HTMLElement>(".pf-footer");
     const hud = root.querySelector<HTMLElement>(".fhud");
     const hudVel = root.querySelector<HTMLElement>(".fhud .vel");
     const hudSec = root.querySelector<HTMLElement>(".fhud .sec");
@@ -1144,7 +1232,13 @@ export default function Home() {
         card.style.transform = `translateY(${lerp(26, 0, fin).toFixed(1)}px)`;
         card.style.pointerEvents = fin > 0.6 ? "auto" : "none";
       }
-      hud?.classList.toggle("in", p > 0.06 && p < 0.995);
+      // a beat behind the card, so the page signs off rather than the two landing together
+      const foot = ease(seg(p, 0.965, 1));
+      if (footer) {
+        footer.style.opacity = foot.toFixed(3);
+        footer.style.transform = `translateY(${lerp(18, 0, foot).toFixed(1)}px)`;
+      }
+      hud?.classList.toggle("in", p > 0.06 && p < 0.95);
       if (hudVel) hudVel.textContent = (warp * 0.94 + rush * 0.1 * (1 - pullOut)).toFixed(2);
       if (hudSec) hudSec.textContent = String(Math.round(p * 12)).padStart(2, "0");
     };
@@ -1179,6 +1273,7 @@ export default function Home() {
       <div id="cursor-dot" ref={cursorDotRef} aria-hidden="true" />
       <canvas id="cursorTrail" ref={cursorTrailRef} aria-hidden="true" />
       <canvas id="starfield" ref={starfieldRef} aria-hidden="true" />
+      <div id="scrollnudge" ref={nudgeRef} aria-hidden="true"><i /></div>
       <div className="pagedots">
         {PAGES.map((p) => (
           <button
@@ -1747,10 +1842,12 @@ export default function Home() {
             <span className="tr">SECTOR <b className="sec">00</b></span>
             <span className="br">VEL <b className="vel">0.00</b>c</span>
           </div>
+
+          {/* the footer lives inside the stage and arrives with the card, so the sequence
+              ends the page — there is nothing left to scroll to once it lands */}
+          <footer className="pf-footer">© 2026 Mark Levi Rowse M. Ramos · Davao City, Philippines</footer>
         </div>
       </section>
-
-      <footer className="pf-footer">© 2026 Mark Levi Rowse M. Ramos · Davao City, Philippines</footer>
 
       <div className={`palette-overlay${paletteOpen ? " open" : ""}`} onMouseDown={(e) => { if (e.target === e.currentTarget) setPaletteOpen(false); }}>
         <div className="palette">
