@@ -58,7 +58,7 @@ const ACT_WINDOWS: [number, number][] = [
   [0.920, 1.000], // resolve
 ];
 const ACT_LABELS = ["who", "what", "how", "built", "stack", "ready"];
-const LOOP_STAGES = ["spec", "plan", "review", "build", "verify", "ship"];
+const LOOP_STAGES = ["language", "decision", "build", "prove", "audit", "ship"];
 const BUILD_STAGES = ["the room", "the round", "the reveal"];
 /** Fades are an absolute distance, not a fraction of the window: the "how" act is
  *  0.42 wide, and a proportional fade there outlasts its own first sub-stage. */
@@ -1508,11 +1508,11 @@ export default function Home() {
           <div className="beat" data-beat="2">
             <div className="beat-meta">how I work</div>
             <div className="prail" id="loopRail">
-              <div className="rail-step"><b>01</b>spec</div>
-              <div className="rail-step"><b>02</b>plan</div>
-              <div className="rail-step"><b>03</b>review</div>
-              <div className="rail-step"><b>04</b>build</div>
-              <div className="rail-step"><b>05</b>verify</div>
+              <div className="rail-step"><b>01</b>language</div>
+              <div className="rail-step"><b>02</b>decision</div>
+              <div className="rail-step"><b>03</b>build</div>
+              <div className="rail-step"><b>04</b>prove</div>
+              <div className="rail-step"><b>05</b>audit</div>
               <div className="rail-step"><b>06</b>ship</div>
             </div>
 
@@ -1520,42 +1520,28 @@ export default function Home() {
               <div className="pstep">
                 <div>
                   <div className="who">human authored</div>
-                  <h2>I write the spec first.</h2>
-                  <p>What changes, what stays, what done means. An agent handed one sentence will build the wrong thing, quickly.</p>
+                  <h2>The words come first.</h2>
+                  <p>Every term gets a definition and a list of the words it forbids. A beat is not a section; a step is not a stage. Code and CSS that disagree about what a thing is called will eventually disagree about what it does.</p>
                 </div>
                 <div className="art">
-                  <div className="cap">/spec &mdash; scroll-snap fights the user</div>
-                  <div className="l"><span className="g">&rsaquo;</span><span>problem: snap <b>captures</b> the scroll instead of assisting it</span></div>
-                  <div className="l"><span className="g">&rsaquo;</span><span>done means: a flick lands where it was aimed</span></div>
-                  <div className="l"><span className="g">&rsaquo;</span><span>out of scope: section order, reveal timing</span></div>
+                  <div className="cap">CONTEXT.md &mdash; prologue</div>
+                  <div className="l"><span className="g">&rsaquo;</span><span><b>beat</b>: one of six acts sharing the sticky stage</span></div>
+                  <div className="l"><span className="no">&times;</span><span>avoid <span className="del">&ldquo;section&rdquo;</span> &mdash; a .pf-section is a real document section</span></div>
+                  <div className="l"><span className="g">&rsaquo;</span><span>flagged: &ldquo;stage&rdquo; meant two things. resolved, both renamed</span></div>
                 </div>
               </div>
 
               <div className="pstep">
                 <div>
-                  <div className="who">agent proposal</div>
-                  <h2>Then the plan, before any code.</h2>
-                  <p>Which files, in what order, and the smallest change that satisfies the spec. I read a plan, not four hundred lines I have to reverse-engineer.</p>
+                  <div className="who">decision record</div>
+                  <h2>Then the decision, written down.</h2>
+                  <p>The options considered, the one taken, and what it costs. The cost list is the half worth keeping &mdash; it is what the next person actually needs, and the part nobody writes.</p>
                 </div>
                 <div className="art">
-                  <div className="cap">implementation plan</div>
-                  <div className="l"><span className="g">1</span><span>globals.css:14 &mdash; <b>one declaration</b></span></div>
-                  <div className="l"><span className="g">2</span><span>no new dependency, no new state</span></div>
-                  <div className="l"><span className="g">3</span><span>check at 390&times;844 before ship</span></div>
-                </div>
-              </div>
-
-              <div className="pstep">
-                <div>
-                  <div className="who">human gate &middot; pre-build</div>
-                  <h2>The plan gets reviewed.</h2>
-                  <p>Scope creep, missing cases, cheaper options &mdash; caught while the change is still a paragraph. Rejecting a plan costs minutes. Rejecting a branch costs a day.</p>
-                </div>
-                <div className="art">
-                  <div className="cap">/plan-eng-review</div>
-                  <div className="l"><span className="ok">&#10003;</span><span>scope matches the spec</span></div>
-                  <div className="l"><span className="no">!</span><span>proximity still snaps on desktop &mdash; <b>intended?</b> confirmed yes</span></div>
-                  <div className="l"><span className="ok">&#10003;</span><span>approved &mdash; one line, reversible</span></div>
+                  <div className="cap">docs/adr/0001 &mdash; reduced-motion block goes last</div>
+                  <div className="l"><span className="g">1</span><span>considered: !important per rule &middot; split the query &middot; @layer</span></div>
+                  <div className="l"><span className="g">2</span><span>chosen: <b>move the block</b> &mdash; one relocation, no new !important</span></div>
+                  <div className="l"><span className="no">!</span><span>cost: order-dependent now. a rule appended below reopens it</span></div>
                 </div>
               </div>
 
@@ -1567,37 +1553,50 @@ export default function Home() {
                 </div>
                 <div className="art">
                   <div className="cap">diff</div>
-                  <div className="l"><span className="no">&minus;</span><span><span className="del">scroll-snap-type: y mandatory</span></span></div>
-                  <div className="l"><span className="ok">+</span><span>scroll-snap-type: y proximity</span></div>
-                  <div className="l"><span className="g">&middot;</span><span className="g">skipped: a JS scroll controller. add when CSS proves insufficient.</span></div>
+                  <div className="l"><span className="no">&minus;</span><span><span className="del">@media (prefers-reduced-motion) at line 57 &mdash; outranked, dead</span></span></div>
+                  <div className="l"><span className="ok">+</span><span>same block, end of file &mdash; <b>7 overrides</b> live again</span></div>
+                  <div className="l"><span className="g">&middot;</span><span className="g">skipped: @layer. the file is unlayered; not one block&apos;s job.</span></div>
+                </div>
+              </div>
+
+              <div className="pstep">
+                <div>
+                  <div className="who">verified, not asserted</div>
+                  <h2>Prove it broke, then prove it doesn&apos;t.</h2>
+                  <p>The smallest check that fails if the logic is wrong. For a cascade bug that is a computed style, not a screenshot &mdash; a screenshot of a broken layout still looks like a layout.</p>
+                </div>
+                <div className="art">
+                  <div className="cap">emulated &mdash; prefers-reduced-motion: reduce</div>
+                  <div className="l"><span className="ok">&#10003;</span><span>matchMedia(&hellip;).matches &rarr; <span className="num">true</span></span></div>
+                  <div className="l"><span className="ok">&#10003;</span><span>.beat position <span className="del">absolute</span> &rarr; <span className="num">static</span>, all six</span></div>
+                  <div className="l"><span className="ok">&#10003;</span><span>.prologue height <span className="del">960vh</span> &rarr; <span className="num">auto</span></span></div>
                 </div>
               </div>
 
               <div className="pstep">
                 <div>
                   <div className="who">human gate &middot; pre-ship</div>
-                  <h2>Nothing ships on the agent&apos;s word.</h2>
-                  <p>I measure it &mdash; on a device for mobile, at a real viewport for web. Numbers, not vibes, and it catches what reading a diff can&apos;t see.</p>
+                  <h2>And what I did not check.</h2>
+                  <p>The limit of the evidence goes in the record too. A report that lists only what passed is a report you cannot size the risk from &mdash; and the gap is always the thing that bites.</p>
                 </div>
                 <div className="art">
-                  <div className="cap">measured &mdash; real defects, this site</div>
-                  <div className="l"><span className="no">!</span><span>animation delay <span className="del">1760ms</span> &rarr; <span className="num">275ms</span></span></div>
-                  <div className="l"><span className="no">!</span><span>section column <span className="del">858px</span> &rarr; <span className="num">1232px</span></span></div>
-                  <div className="l"><span className="no">!</span><span>text contrast <span className="del">3.2:1</span> &rarr; <span className="num">6.9:1</span></span></div>
-                  <div className="l"><span className="no">!</span><span>duration read <span className="del">19 months</span> &rarr; <span className="num">20</span></span></div>
+                  <div className="cap">not verified</div>
+                  <div className="l"><span className="ok">&#10003;</span><span>checked at <span className="num">1400&times;900</span> and <span className="num">375&times;812</span></span></div>
+                  <div className="l"><span className="no">!</span><span>reduced motion below the prologue &mdash; <b>not re-audited</b></span></div>
+                  <div className="l"><span className="no">!</span><span>the order-dependence has a comment, <b>not a test</b></span></div>
                 </div>
               </div>
 
               <div className="pstep">
                 <div>
                   <div className="who">human decision</div>
-                  <h2>Then it ships, with a commit that says why.</h2>
-                  <p>Tests, diff review, deploy. If something was left out, the commit says that too &mdash; a record you can&apos;t trust is worth nothing.</p>
+                  <h2>Then it ships, with a message that says why.</h2>
+                  <p>One reversible change, and a commit that explains the intent rather than the diff. If something was left out, the message says that too &mdash; a record you can&apos;t trust is worth nothing.</p>
                 </div>
                 <div className="art">
-                  <div className="cap">/ship</div>
+                  <div className="cap">git log</div>
                   <div className="l"><span className="ok">&#10003;</span><span>lint, types, build clean</span></div>
-                  <div className="l"><span className="g">&middot;</span><span><b>34505b1</b> Relax scroll-snap from mandatory to proximity</span></div>
+                  <div className="l"><span className="g">&middot;</span><span><b>a8024ff</b> Draw the galaxy as pixels, and redraw it at each zoom instead of magnifying</span></div>
                   <div className="l"><span className="ok">&#10003;</span><span>deployed, verified live</span></div>
                 </div>
               </div>
