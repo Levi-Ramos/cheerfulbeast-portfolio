@@ -54,18 +54,6 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
 /* reveal-on-scroll */
 .reveal { opacity:0; transform:translateY(30px); transition:opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1); }
 .reveal.in { opacity:1; transform:none; }
-@media (prefers-reduced-motion:reduce){
-  .reveal{opacity:1;transform:none;transition:none;}
-  html{scroll-snap-type:none !important;}
-  .prologue{ height:auto; }
-  .pstage{ position:static; height:auto; display:grid; gap:80px; padding:80px 0; }
-  .beat{ position:static; width:100%; opacity:1 !important; transform:none !important; }
-  .pstep{ position:static; display:grid; opacity:1; margin-bottom:44px; }
-  .pstage-inner, .pstage-inner.tall{ min-height:0; }
-  .rail-step{ color:var(--muted); }
-  .pro-rail, .skip-pro{ display:none; }
-  *{animation-duration:.001ms !important; animation-iteration-count:1 !important;}
-}
 
 .pf-wrap { max-width:1320px; margin:0 auto; padding:0 44px; }
 
@@ -496,4 +484,20 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
   .pf-nav .inner{ padding:0 20px; gap:10px; }
   .kbd-hint{ display:none; }
   .btn.solid{ padding:8px 14px; font-size:12px; white-space:nowrap; }
+}
+
+/* ===== reduced motion =====
+   Last in the file on purpose: these unstack the scroll-scrubbed prologue, and the
+   rules they override live further down. Move this block up and the cascade eats it. */
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none;}
+  html{scroll-snap-type:none !important;}
+  .prologue{ height:auto; }
+  .pstage{ position:static; height:auto; display:grid; gap:80px; padding:80px 0; }
+  .beat{ position:static; width:100%; opacity:1 !important; transform:none !important; }
+  .pstep{ position:static; display:grid; opacity:1; margin-bottom:44px; }
+  .pstage-inner, .pstage-inner.tall{ min-height:0; }
+  .rail-step{ color:var(--muted); }
+  .pro-rail, .skip-pro{ display:none; }
+  *{animation-duration:.001ms !important; animation-iteration-count:1 !important;}
 }
