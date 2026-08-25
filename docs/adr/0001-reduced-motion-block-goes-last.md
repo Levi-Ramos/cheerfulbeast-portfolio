@@ -46,15 +46,38 @@ not a browser one, so it is not rare.
 - **The block is now position-dependent.** Appending any rule for `.prologue`,
   `.pstage`, `.beat`, or `.pstep` below it silently reintroduces this bug. A comment
   above the block says so, and that comment is the only guard — there is no test.
-- **Mobile plus reduced motion now resolves in favour of reduced motion.** The block sits
-  after `@media (max-width: 760px)`. Nothing conflicts today (`.pro-rail { left: 20px }`
-  versus `display: none` are different properties), but a future narrow-screen rule
-  touching the same property as a reduced-motion rule will lose.
-- **The fallback layout is now reachable for the first time.** It was unreachable code
-  from the day it was written, so it had never been looked at. It renders correctly at
-  1400×900 and at 375×812, checked with `prefers-reduced-motion` emulated — but it has no
-  further history than that, and the rest of the page's reduced-motion behaviour below the
-  prologue was not re-audited.
+- **Mobile plus reduced motion now resolves in favour of reduced motion**, and two
+  same-property conflicts already exist. An earlier draft of this ADR claimed there were
+  none; that was wrong, and the bigger of the two is the best thing about this change:
+  - `@media (max-width: 760px) { .pstep { display: none } }` versus reduced-motion
+    `.pstep { display: grid }`. The mobile path shows a step only when JS adds `.on`, and
+    that JS bails under reduced motion — so **before this move, a phone with reduced
+    motion rendered the whole "how I work" and "the build" beats as blank space.** Not
+    overlapping text: nothing at all. Reduced motion now wins and the steps render.
+  - `@media (max-width: 760px) { .pstage { padding-bottom: 52px } }` versus reduced-motion
+    `.pstage { padding: 80px 0 }`. The shorthand now overrides that mobile tuning. Minor,
+    but it is a real regression in narrow-screen spacing and it was not intended.
+
+  A future narrow-screen rule touching the same property as a reduced-motion rule will
+  lose the same way. That is the standing cost of the ordering.
+- **The fallback layout is now reachable for the first time**, which means its own latent
+  bugs are reachable too. It was unreachable code from the day it was written, so it had
+  never been looked at. It renders at 1400×900 and at 375×812 with
+  `prefers-reduced-motion` emulated — but making it reachable immediately surfaced two of
+  its own latent bugs, both fixed here:
+  - It restored `opacity` on `.pstep` without restoring `pointer-events`, so every
+    newly-visible step was unselectable.
+  - It set `.pstage { position: static }`. The two `.aurora` canvases are absolutely
+    positioned children of the stage, so a static stage handed their containing block to
+    `.prologue` — putting them outside the stage's own `overflow: hidden` and letting a
+    decorative orb widen the document by 260px at every viewport. The stage is
+    `position: relative` here instead: it still unstacks, and it still contains the orbs.
+    Worth remembering as a general rule — **`position: static` is not a neutral value if
+    the box has absolutely-positioned children.**
+
+  Expect more of that shape: every rule in this block is being exercised for the first
+  time. The rest of the page's reduced-motion behaviour below the prologue has still not
+  been re-audited.
 - **Six of the seven overrides changed behaviour with no visual regression risk in the
   default path**, because the whole block is inert unless the visitor has reduced motion
   on. The change cannot affect anyone who was seeing the site correctly.

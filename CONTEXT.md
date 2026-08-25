@@ -33,7 +33,7 @@ page), "slide", "step" (a step is the sub-unit, below).
 
 **Step**:
 A sub-unit *within* a beat, for the two beats that have internal stages — the
-six-stage loop and the three-part project walkthrough. Steps advance only after
+seven-stage loop and the three-part project walkthrough. Steps advance only after
 their beat has finished fading in, so nothing swaps underneath a cross-fade.
 _Avoid_: "beat", "stage" (both are the enclosing units).
 
@@ -73,7 +73,11 @@ mechanisms with different failure modes).
 - "Section" was used for both a beat and a `.pf-section`. Resolved: **beat** for
   the prologue's six acts, **section** only for the real document sections
   (Projects, Experience, Skills, Contact).
-- "Stage" reads as both the sticky viewport and a step in the six-stage loop.
+- "Stage" reads as both the sticky viewport and a step in the seven-stage loop.
   Resolved: the viewport is the **stage**; a unit of the loop is a **step**. The
-  loop's *rail labels* still read "01 language … 06 ship" as user-facing copy,
+  loop's *rail labels* still read "01 language … 07 ship" as user-facing copy,
   which is fine — that is the visitor's word, not the code's.
+- `LOOP_STAGES` and the `#loopRail` markup are two lists that must stay the same
+  length as the `.pstep` children of `#loopStage`. The scrub clamps to the *step*
+  count, so a label with no step behind it goes permanently dim and silently
+  shifts every caption after it by one. Adding a stage means editing three places.

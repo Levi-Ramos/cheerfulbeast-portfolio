@@ -150,7 +150,7 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
 }
 
 /* the rail holds still; the stage swaps underneath it */
-.prail { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin:22px 0 40px; }
+.prail { display:grid; grid-template-columns:repeat(7,1fr); gap:10px; margin:22px 0 40px; }
 .prail.r3 { grid-template-columns:repeat(3,1fr); max-width:620px; }
 .rail-step { padding-top:11px; border-top:2px solid var(--border); font-family:var(--mono); font-size:12.5px; color:var(--dim); transition:color .3s var(--ease), border-color .3s var(--ease); }
 .rail-step b { display:block; font-weight:400; font-size:10.5px; color:var(--dim); margin-bottom:4px; }
@@ -448,7 +448,7 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
   .prologue{ height:780vh; }
   .pstage{ padding-bottom:52px; }
   .beat{ padding:0 20px; }
-  .prail{ grid-template-columns:repeat(3,1fr); gap:22px 12px; margin:18px 0 26px; }
+  .prail{ grid-template-columns:repeat(4,1fr); gap:22px 12px; margin:18px 0 26px; }
   .prail.r3{ margin:14px 0 18px; }
   .pstep{ position:static; display:none; grid-template-columns:1fr; gap:20px; }
   .pstep.on{ display:grid; }
@@ -493,9 +493,12 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
   .reveal{opacity:1;transform:none;transition:none;}
   html{scroll-snap-type:none !important;}
   .prologue{ height:auto; }
-  .pstage{ position:static; height:auto; display:grid; gap:80px; padding:80px 0; }
+  /* relative, not static: the aurora canvases are absolute children, and a static
+     stage hands their containing block to .prologue — which puts them outside this
+     box's overflow:hidden and lets a decorative orb widen the document by 260px. */
+  .pstage{ position:relative; height:auto; display:grid; gap:80px; padding:80px 0; }
   .beat{ position:static; width:100%; opacity:1 !important; transform:none !important; }
-  .pstep{ position:static; display:grid; opacity:1; margin-bottom:44px; }
+  .pstep{ position:static; display:grid; opacity:1; pointer-events:auto; margin-bottom:44px; }
   .pstage-inner, .pstage-inner.tall{ min-height:0; }
   .rail-step{ color:var(--muted); }
   .pro-rail, .skip-pro{ display:none; }

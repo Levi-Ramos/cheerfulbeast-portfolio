@@ -58,7 +58,7 @@ const ACT_WINDOWS: [number, number][] = [
   [0.920, 1.000], // resolve
 ];
 const ACT_LABELS = ["who", "what", "how", "built", "stack", "ready"];
-const LOOP_STAGES = ["language", "decision", "build", "prove", "audit", "ship"];
+const LOOP_STAGES = ["language", "decision", "build", "prove", "review", "audit", "ship"];
 const BUILD_STAGES = ["the room", "the round", "the reveal"];
 /** Fades are an absolute distance, not a fraction of the window: the "how" act is
  *  0.42 wide, and a proportional fade there outlasts its own first sub-stage. */
@@ -1512,8 +1512,9 @@ export default function Home() {
               <div className="rail-step"><b>02</b>decision</div>
               <div className="rail-step"><b>03</b>build</div>
               <div className="rail-step"><b>04</b>prove</div>
-              <div className="rail-step"><b>05</b>audit</div>
-              <div className="rail-step"><b>06</b>ship</div>
+              <div className="rail-step"><b>05</b>review</div>
+              <div className="rail-step"><b>06</b>audit</div>
+              <div className="rail-step"><b>07</b>ship</div>
             </div>
 
             <div className="pstage-inner" id="loopStage">
@@ -1570,6 +1571,20 @@ export default function Home() {
                   <div className="l"><span className="ok">&#10003;</span><span>matchMedia(&hellip;).matches &rarr; <span className="num">true</span></span></div>
                   <div className="l"><span className="ok">&#10003;</span><span>.beat position <span className="del">absolute</span> &rarr; <span className="num">static</span>, all six</span></div>
                   <div className="l"><span className="ok">&#10003;</span><span>.prologue height <span className="del">960vh</span> &rarr; <span className="num">auto</span></span></div>
+                </div>
+              </div>
+
+              <div className="pstep">
+                <div>
+                  <div className="who">fresh context &middot; didn&apos;t write it</div>
+                  <h2>Something that didn&apos;t write it reads it.</h2>
+                  <p>A model is generous to code it just produced, so the review runs in a context that never saw the build &mdash; on every diff, not just the risky ones. This one caught a stage label with no step behind it, and a claim in my own decision record that was flatly false.</p>
+                </div>
+                <div className="art">
+                  <div className="cap">/code-review &mdash; a8024ff..d08fd52</div>
+                  <div className="l"><span className="no">!</span><span>7th rail label, <b>only 6 steps</b> behind it &mdash; caption off by one</span></div>
+                  <div className="l"><span className="no">!</span><span>reduced motion: .pstep visible but <b>pointer-events:none</b></span></div>
+                  <div className="l"><span className="no">!</span><span>the ADR claimed &ldquo;nothing conflicts&rdquo; &mdash; <b>two</b> did</span></div>
                 </div>
               </div>
 
