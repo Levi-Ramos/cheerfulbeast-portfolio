@@ -125,16 +125,20 @@ const fitCanvas = (c: HTMLCanvasElement, ctx: CanvasRenderingContext2D | null, w
 //   - the old renderer flattened y by .5 to cancel the aspect of a monospace cell. Square
 //     pixels have no such distortion to cancel, so that .5 became a mild tilt instead.
 //   - 2.6 radians of winding was legible across 34 columns of glyphs; at pixel resolution
-//     it is too loose to read as arms at all, hence 4.4 with the scatter halved.
-const GALAXY_ARMS = 3;
+//     it is too loose to read as arms at all, hence the scatter halved and far more winding.
+// Arms and winding move together: at 5 arms the neighbours sit 72 degrees apart, and
+// without enough winding to curve them the galaxy reads as a pinwheel of straight spokes
+// rather than a spiral. 5/7 is the pair that holds.
+const GALAXY_ARMS = 5;
 // Sized for the finale: by the time it has zoomed 30x, only the stars inside a few
 // hundred px of the core are still on screen, so the field has to be dense enough that
 // that slice still reads as a galaxy. The boot terminal samples a prefix of the same list.
 const GALAXY_STAR_COUNT = 5200;
-// The terminal's galaxy is ~37x25 cells; more than a few hundred stars saturates
-// every cell and the spiral collapses into a solid blob.
-const GALAXY_GATE_STARS = 420;
-const GALAXY_WIND = 4.4;
+// The terminal's canvas is deliberately large enough to give the spiral ~53x36 cells at
+// the shared 6px lattice — five wound arms simply cannot resolve in fewer, and dropping to
+// a finer lattice just for this one spot would break the dialect everything else speaks.
+const GALAXY_GATE_STARS = 620;
+const GALAXY_WIND = 7;
 const GALAXY_SCATTER = 0.5;
 const GALAXY_FLATTEN = 0.66;
 type GalaxyStar = { r: number; a0: number; spin: number };
