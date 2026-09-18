@@ -872,9 +872,13 @@ export default function Home() {
     window.addEventListener("resize", repaintOrbs);
     cleanups.push(() => window.removeEventListener("resize", repaintOrbs));
 
-    // parallax aurora
+    // Parallax aurora — fine pointers only. The mouse half is inert on touch anyway, and
+    // the scroll half is actively harmful there: it drifts the orbs down by up to 0.12 of
+    // the prologue's travel, ~790px on a phone, which is more than a phone stage is tall.
+    // No static anchor can survive that, so the CSS that keeps the cores off-canvas at
+    // 390px (see globals.css) only holds if nothing moves them afterwards.
     const heroEl = prologueRef.current;
-    if (!reduced && heroEl && a1Ref.current && a2Ref.current) {
+    if (!reduced && window.matchMedia("(pointer: fine)").matches && heroEl && a1Ref.current && a2Ref.current) {
       const a1 = a1Ref.current, a2 = a2Ref.current;
       const mouse = { nx: 0, ny: 0 };
       const render = () => {

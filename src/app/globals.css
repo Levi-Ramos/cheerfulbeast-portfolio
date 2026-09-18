@@ -447,6 +447,14 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
   /* the prologue is denser per act on a phone, so it needs less scroll to read */
   .prologue{ height:780vh; }
   .pstage{ padding-bottom:52px; }
+  /* The desktop offsets hang both orbs off the sides, so their cores sit in the
+     outer margins and only the dithered rim reaches the text. At 390px the same
+     offsets put the cores at x=250 and x=60 — 269px apart on a 390px screen, both
+     under the copy, where their alphas compound and the eyebrow drops to 2.6:1.
+     Re-anchor so each core clears the stage on its own diagonal; the rim still
+     crosses the corners, so the ambient layer keeps its full opacity. */
+  .a1{ width:640px; height:640px; top:-380px; right:-360px; }
+  .a2{ width:600px; height:600px; top:auto; bottom:-360px; left:-330px; }
   .beat{ padding:0 20px; }
   .prail{ grid-template-columns:repeat(4,1fr); gap:22px 12px; margin:18px 0 26px; }
   .prail.r3{ margin:14px 0 18px; }
@@ -484,6 +492,24 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
   .pf-nav .inner{ padding:0 20px; gap:10px; }
   .kbd-hint{ display:none; }
   .btn.solid{ padding:8px 14px; font-size:12px; white-space:nowrap; }
+}
+
+/* ===== short viewports =====
+   Every act above is sized by width, so the "built" act is a flat 712px on a 680px
+   laptop and a 1080px desktop alike. It is centred in the sticky stage, so below
+   712 it clips at both ends — and the top end is the project link, which is the
+   half you notice, the bottom end being slack.
+   The height comes from .pstage-inner.tall's 580px floor: each .pstep is absolute,
+   so the steps contribute nothing back and that constant IS the height — 122px more
+   than the tallest step actually needs, and it never shrinks. The max-width block
+   above already solves this: flow the steps instead of stacking them, and the floor
+   stops being needed at all. Same mechanism, keyed on height, no magic numbers.
+   Costs the sub-stage crossfade, which display:none can't transition — the same
+   trade phones have shipped with. */
+@media (max-height:820px){
+  .pstep{ position:static; display:none; }
+  .pstep.on{ display:grid; }
+  .pstage-inner, .pstage-inner.tall{ min-height:0; }
 }
 
 /* ===== reduced motion =====
