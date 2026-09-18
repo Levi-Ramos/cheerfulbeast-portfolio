@@ -2,7 +2,7 @@ import type { IconType } from "react-icons";
 import {
   SiDart, SiFlutter, SiTypescript, SiJavascript, SiDotnet, SiNextdotjs,
   SiBlazor, SiLaravel, SiFlask, SiDjango, SiPostgresql, SiMysql,
-  SiGithubactions, SiGit, SiFastlane,
+  SiGithubactions, SiGit, SiFastlane, SiReactquery, SiWordpress,
 } from "react-icons/si";
 import { FaJava, FaVuejs, FaPhp, FaPython, FaDocker, FaReact } from "react-icons/fa";
 import { BiLogoSpringBoot } from "react-icons/bi";
@@ -160,17 +160,20 @@ export const projects: Project[] = [
 ];
 
 /** The lenses the Experience filter offers. Each highlight declares which it belongs to. */
-export type Lens = "flutter" | "dotnet" | "web" | "backend" | "ops";
+export type Lens = "flutter" | "dotnet" | "web" | "backend" | "ops" | "ai";
 
 export const LENSES: { key: Lens; label: string; tags: string[] }[] = [
   { key: "flutter", label: "Flutter", tags: ["Flutter", "Dart", "Bloc"] },
-  { key: "dotnet", label: ".NET / Blazor", tags: ["Blazor", ".NET"] },
-  { key: "web", label: "Next.js / Vue", tags: ["Next.js", "Vue", "Quasar"] },
+  { key: "dotnet", label: ".NET / Blazor", tags: ["Blazor", ".NET", "SignalR"] },
+  { key: "web", label: "Next.js / Vue", tags: ["Next.js", "React", "TanStack Query", "Vue", "Quasar"] },
   { key: "backend", label: "Laravel / APIs", tags: ["Laravel", "PHP", "Flask", "Spring Boot", "KillBill"] },
-  { key: "ops", label: "CI/CD", tags: ["Docker", "GitHub Actions", "Fastlane"] },
+  { key: "ops", label: "CI/CD", tags: ["Docker", "GitHub Actions", "Fastlane", "PowerShell", "Flyway"] },
+  { key: "ai", label: "AI workflow", tags: ["Claude Code"] },
 ];
 
 export type Highlight = {
+  /** Set on the first highlight of a product group — renders a subhead above it. */
+  product?: string;
   /** Bolded opening phrase — the ownership claim, so it survives a skim. */
   lead?: string;
   text: string;
@@ -225,43 +228,123 @@ export const experience: Job[] = [
     company: "ActiveSystems Software Inc.",
     start: "2025-01",
     products: 4,
-    desc: "Sole developer on a greenfield Flutter field-sales app replacing a legacy Delphi mobile app. Earlier, primary developer of a payroll/HRMS web client (Blazor/.NET), plus backend features and a Next.js migration.",
+    desc: "Four products: a Blazor/.NET payroll platform, a greenfield Flutter field-sales app replacing a legacy Delphi client, a BIR-compliant Flutter POS, and a Delphi/React ticket portal whose delivery pipeline I built from scratch.",
     highlights: [
       {
-        lead: "Sole developer",
-        text: "on a greenfield Flutter field-sales app replacing a legacy Delphi client — architecture through release.",
-        tech: ["flutter"],
+        lead: "Works spec-first with an AI coding agent",
+        text: "(Claude Code) across all four products — a short PRD and implementation plan per feature, agent-driven execution, and managed context on long-running work.",
+        tech: ["ai"],
       },
       {
+        product: "ActiveWork — payroll & HR platform · Blazor, .NET Core, Next.js",
         lead: "Primary developer",
-        text: "of the Blazor payroll/HRMS web client; shipped .NET backend features and the Next.js migration.",
+        text: "of the Blazor web client — most of the front-end feature set across 200+ Razor components: payroll schedules, attendance import and calendar, Philippine statutory payroll pages.",
         tech: ["dotnet", "web"],
       },
       {
-        text: "Owns the mobile CI/CD pipeline — GitHub Actions, Fastlane, TestFlight — plus Docker deploys for supporting services.",
-        tech: ["ops"],
-      },
-    ],
-    tags: ["Flutter", "Dart", "Bloc", "Blazor", ".NET", "Next.js", "PostgreSQL", "Docker", "GitHub Actions", "Fastlane"],
-  },
-  {
-    role: "Full-Stack Developer",
-    company: "Apollo Technologies, Inc.",
-    start: "2024-07",
-    end: "2024-12",
-    desc: "Owned a Vue/Quasar reskin of a telecom billing system and built a Flutter mobile app (Bloc) for a client ISP.",
-    highlights: [
-      {
-        lead: "Owned",
-        text: "a Vue/Quasar reskin of a live telecom billing system.",
+        text: "Built the TanStack Query data layer in the Next.js 16 / React 19 client, for payroll reporting (export, summary and period queries) and the account-access module.",
         tech: ["web"],
       },
       {
-        text: "Built a Flutter loyalty/WiFi app from scratch for a client ISP, integrating a legacy provisioning system that returned scraped HTML.",
+        lead: "Owns two domain modules",
+        text: "end to end — Taxes (tax tables and brackets, de-minimis allowances, its read/update API) and account access (token-based invitations, temporary-password enforcement, password reset).",
+        tech: ["dotnet", "backend"],
+      },
+      {
+        text: "Built the real-time notification services on ASP.NET Core SignalR, with tenant- and user-scoped broadcast groups, plus the statutory payroll calculators — SSS, PhilHealth, Pag-IBIG, withholding tax.",
+        tech: ["dotnet", "backend"],
+      },
+      {
+        text: "Contributed the payroll- and contribution-summary reporting endpoints and their report templates.",
+        tech: ["dotnet", "backend"],
+      },
+      {
+        text: "Engineered the containerized deploy pipeline — GitHub Actions, Docker, GitHub Container Registry — with an SSH deploy step to reach a network-isolated production environment.",
+        tech: ["ops"],
+      },
+      {
+        product: "ActiveFieldSales — field-sales mobile app · Flutter",
+        lead: "Sole developer",
+        text: "on a greenfield Flutter/Bloc app replacing a legacy Delphi mobile client for the company's ERP product — architecture through release to internal testing.",
         tech: ["flutter"],
       },
       {
-        text: "Collaborated on the Flask API layer and a KillBill subscription-billing integration.",
+        lead: "Sole author",
+        text: "of the iOS and Android release pipeline, end to end: GitHub Actions and Fastlane.",
+        tech: ["ops", "flutter"],
+      },
+      {
+        product: "ServePOS — point of sale · Flutter, BIR-compliant",
+        text: "Built the Popular Items sales-reporting widgets and the end-of-shift cash-count gate, which blocks reconciliation while held or unpaid transactions are still open.",
+        tech: ["flutter"],
+      },
+      {
+        text: "Built a Provider-based permission gate enforcing per-action authorization on payments, discounts and reprints, with an override-login fallback — still intact in production.",
+        tech: ["flutter"],
+      },
+      {
+        text: "Built refund and return processing, the on-hold order drawer (hold, resume, cashier-scoped queues), and Philippine statutory discount handling.",
+        tech: ["flutter"],
+      },
+      {
+        text: "Co-owns the mobile release automation — Fastlane, TestFlight and Play.",
+        tech: ["ops"],
+      },
+      {
+        product: "ActiveScorecard — job-ticket portal · Delphi/Object Pascal, React",
+        lead: "Built the deploy pipeline from scratch",
+        text: "across three repositories — self-hosted GitHub Actions runners, PowerShell packaging, Flyway migrations run from the deployed artifact, and health-probed in-place swaps that restore the previous build on failure.",
+        tech: ["ops"],
+      },
+      {
+        text: "Took the product from no pipeline, no backups and no monitoring to a service-managed system: a Windows-service backend verified by unattended reboot, and nightly off-box backups whose weekly checksum-verified restore caught a real three-night silent failure.",
+        tech: ["ops"],
+      },
+      {
+        text: "Ships the frontend as immutable versioned releases cut from a release tag — atomic swaps behind a byte-hash health probe with one-dispatch rollback, and a corrected cache policy: no-store entry point, immutable hashed assets.",
+        tech: ["ops", "web"],
+      },
+      {
+        text: "Diagnosed a silent deploy failure where name-sorted artifact selection shipped a stale build past a passing health check; added provenance guards pinning each deploy to the commit just built.",
+        tech: ["ops"],
+      },
+      {
+        text: "Built role-based review gating for service-request modifications — a new RBAC policy action splitting content from due-date changes, routed to the right authority tier, enforced on both client and server, with a migration and a standalone test runner.",
+        tech: ["backend", "web"],
+      },
+      {
+        text: "Fixed a QA-found cross-bucket approval bug in that feature post-release, and shipped the correction with regression tests.",
+        tech: ["backend"],
+      },
+      {
+        text: "Implemented the ticket-creation email notification for the portal's public intake flow, per an accepted ADR, with defensive null-handling for unassigned tickets.",
+        tech: ["backend"],
+      },
+      {
+        text: "Maintain the public WordPress site where clients read this portal's ticket report; fixed a broken embed by tracing the iframe refusal to the app's frame-ancestor restrictions.",
+        tech: ["web", "ops"],
+      },
+    ],
+    tags: ["Flutter", "Dart", "Bloc", "Blazor", ".NET", "SignalR", "Next.js", "React", "TanStack Query", "Delphi", "PostgreSQL", "Docker", "GitHub Actions", "Fastlane", "PowerShell", "Flyway", "Claude Code"],
+  },
+  {
+    role: "Frontend Developer",
+    company: "Apollo Technologies, Inc.",
+    start: "2024-07",
+    end: "2024-12",
+    desc: "Front-end lead on a Vue/Quasar reskin of a live telecom billing system, with full-stack scope: a Flutter mobile app and the Flask integration layer behind it.",
+    highlights: [
+      {
+        lead: "Owned",
+        text: "the front-end redevelopment of a live telecom billing system in Vue 3 and Quasar, for an ISP client.",
+        tech: ["web"],
+      },
+      {
+        text: "Built a Flutter/Bloc loyalty and Wi-Fi app from scratch for the same client, integrating a legacy provisioning system that returned scraped HTML instead of a REST interface.",
+        tech: ["flutter"],
+      },
+      {
+        text: "Collaborated on the Flask API layer bridging that integration, and on a third-party KillBill subscription-billing integration.",
         tech: ["backend"],
       },
     ],
@@ -326,8 +409,10 @@ export const skillGroups: SkillGroup[] = [
       { name: "Flutter", Icon: SiFlutter, color: "#02569B" },
       { name: "React", Icon: FaReact, color: "#0EA5C7" },
       { name: "Next.js", Icon: SiNextdotjs, color: "#0a0d14" },
+      { name: "TanStack Query", Icon: SiReactquery, color: "#FF4154" },
       { name: "Vue / Quasar", Icon: FaVuejs, color: "#42B883" },
       { name: "Blazor", Icon: SiBlazor, color: "#5C2D91" },
+      { name: "WordPress", Icon: SiWordpress, color: "#21759B" },
     ],
   },
   {

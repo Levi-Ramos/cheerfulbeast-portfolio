@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaGithub, FaLinkedinIn } from "react-icons/fa6";
 import { ChevronLeft, ChevronRight, Lock, Search } from "lucide-react";
 import {
@@ -1877,18 +1877,36 @@ export default function Home() {
                       {j.company}
                       {!!j.products && <em> · {j.products} products</em>}
                     </div>
-                    {!!j.highlights?.length && (
-                      <ul className="highlights">
-                        {j.highlights.map((h, i) => {
-                          const hit = lens !== "all" && !!h.tech?.includes(lens as Lens);
-                          return (
-                            <li key={i} className={lens === "all" ? undefined : hit ? "hit" : "dim"}>
-                              {h.lead && <b>{h.lead}</b>}{h.lead ? " " : ""}{h.text}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
+                    {!!j.highlights?.length && (() => {
+                      const hs = j.highlights!;
+                      // A bright product subhead over four dimmed bullets reads as a match it
+                      // isn't, so the heading dims with its group. A group runs from one
+                      // highlight carrying `product` to the next one that does.
+                      const groupHit = (start: number) => {
+                        let end = start + 1;
+                        while (end < hs.length && !hs[end].product) end++;
+                        return hs.slice(start, end).some((h) => h.tech?.includes(lens as Lens));
+                      };
+                      return (
+                        <ul className="highlights">
+                          {hs.map((h, i) => {
+                            const hit = lens !== "all" && !!h.tech?.includes(lens as Lens);
+                            return (
+                              <Fragment key={i}>
+                                {h.product && (
+                                  <li className={`prod${lens === "all" || groupHit(i) ? "" : " dim"}`}>
+                                    {h.product}
+                                  </li>
+                                )}
+                                <li className={lens === "all" ? undefined : hit ? "hit" : "dim"}>
+                                  {h.lead && <b>{h.lead}</b>}{h.lead ? " " : ""}{h.text}
+                                </li>
+                              </Fragment>
+                            );
+                          })}
+                        </ul>
+                      );
+                    })()}
                     {!!j.tags?.length && (
                       <div className="tags">
                         {j.tags.map((t) => (
