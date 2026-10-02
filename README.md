@@ -3,7 +3,7 @@
 Mark Levi Rowse M. Ramos's portfolio site — [cheerfulbeast-portfolio.vercel.app](https://cheerfulbeast-portfolio.vercel.app).
 
 A single-page Next.js site with a terminal-boot intro, a command palette, and a
-hand-rolled ASCII galaxy animation, in front of the usual projects / experience /
+hand-rolled ASCII galaxy animation, in front of the usual projects /
 skills / contact sections.
 
 ## Stack
@@ -19,11 +19,11 @@ skills / contact sections.
 ```
 src/
   app/
-    page.tsx       — the entire site: intro gate, hero, projects, experience, skills, contact
+    page.tsx       — the entire site: intro gate, hero, projects, skills, contact
     globals.css     — all custom styling (terminal chrome, cards, lightbox, palette, etc.)
     layout.tsx
   lib/
-    portfolio-data.tsx  — projects / experience / skills content (edit this to update copy)
+    portfolio-data.tsx  — projects / skills content (edit this to update copy)
   components/ui/    — shadcn primitives from initial scaffolding; not currently
                        imported by the page (Tailwind + shadcn are configured
                        and ready to use, just unused today)

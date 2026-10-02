@@ -4,8 +4,8 @@ import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaGithub, FaLinkedinIn } from "react-icons/fa6";
 import { ChevronLeft, ChevronRight, Lock, Search } from "lucide-react";
 import {
-  projects, experience, skillGroups, LENSES, monthsIn, formatRange,
-  type Project, type TermLine, type Lens,
+  projects, skillGroups,
+  type Project, type TermLine,
 } from "@/lib/portfolio-data";
 
 const GITHUB = "https://github.com/Levi-Ramos";
@@ -27,7 +27,6 @@ type LB = {
 
 const NAV_LINKS = [
   { id: "projects", label: "Projects" },
-  { id: "experience", label: "Experience" },
   { id: "skills", label: "Skills" },
   { id: "contact", label: "Contact" },
 ] as const;
@@ -37,7 +36,6 @@ const PAGES = [{ id: "top", label: "Intro" }, ...NAV_LINKS] as const;
 const GATE_BOOT = [
   "booting mark.ramos v2026.1 ...",
   "mounting projects/       [ok]",
-  "mounting experience/     [ok]",
   "mounting skills/         [ok]",
 ];
 
@@ -244,8 +242,6 @@ const FINALE_BEATS = [
 ];
 const FINALE_BEAT_EDGE = 0.035; // fade in/out at each end; the rest of the slice is a hold
 
-const LONGEST_ROLE = Math.max(...experience.map((j) => monthsIn(j)));
-
 export default function Home() {
   const [lb, setLb] = useState<LB | null>(null);
   const [modKey, setModKey] = useState("⌘");
@@ -279,7 +275,6 @@ export default function Home() {
   const paletteInputRef = useRef<HTMLInputElement>(null);
   const projectRefs = useRef<(HTMLElement | null)[]>([]);
   const [projTab, setProjTab] = useState<"work" | "personal">("personal");
-  const [lens, setLens] = useState<Lens | "all">("all");
   const galaxyGateRef = useRef<HTMLCanvasElement>(null);
   const galaxyStarsRef = useRef<GalaxyStar[]>([]);
   const galaxyAngleRef = useRef(0);
@@ -554,7 +549,6 @@ export default function Home() {
 
   const PALETTE_ACTIONS = [
     { l: "Go to Projects", h: "section", a: () => document.querySelector("#projects")?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" }) },
-    { l: "Go to Experience", h: "section", a: () => document.querySelector("#experience")?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" }) },
     { l: "Go to Skills", h: "section", a: () => document.querySelector("#skills")?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth" }) },
     { l: "Go to Contact", h: "section", a: () => jumpToSection("contact", !reducedRef.current) },
     { l: "View Resume", h: "↗", a: () => window.open("/resume.pdf", "_blank", "noopener") },
@@ -1865,121 +1859,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="experience" className="pf-section alt">
+      <section id="skills" className="pf-section alt">
         <div className="pf-wrap">
-          <div className="sec-head reveal"><span className="sec-num">02</span><span className="sec-title">Experience</span><span className="sec-sub">filter by stack</span></div>
-          <div className="exp-filter reveal">
-            <span className="ef-lbl">where I used</span>
-            <button
-              type="button"
-              className={`ef-chip clickable${lens === "all" ? " on" : ""}`}
-              aria-pressed={lens === "all"}
-              onClick={() => setLens("all")}
-            >
-              everything
-            </button>
-            {LENSES.map((l) => (
-              <button
-                key={l.key}
-                type="button"
-                className={`ef-chip clickable${lens === l.key ? " on" : ""}`}
-                aria-pressed={lens === l.key}
-                onClick={() => setLens(lens === l.key ? "all" : l.key)}
-              >
-                {l.label}
-              </button>
-            ))}
-            {lens !== "all" && (() => {
-              // Counting the matches is the point of the filter — a lens that dims
-              // most of the page without saying how much it kept is just noise.
-              const hits = experience.reduce(
-                (n, j) => n + (j.highlights?.filter((h) => h.tech?.includes(lens)).length ?? 0), 0);
-              const roles = experience.filter(
-                (j) => j.highlights?.some((h) => h.tech?.includes(lens))).length;
-              const label = LENSES.find((l) => l.key === lens)?.label;
-              return (
-                <span className="ef-count" role="status">
-                  {label} — {roles} of {experience.length} roles · {hits} {hits === 1 ? "highlight" : "highlights"}
-                </span>
-              );
-            })()}
-          </div>
-          <div className="tl" data-filter={lens === "all" ? undefined : lens}>
-            {experience.map((j) => {
-              const months = monthsIn(j);
-              const matched = j.highlights?.filter((h) => h.tech?.includes(lens as Lens)).length ?? 0;
-              const lensTags = LENSES.find((l) => l.key === lens)?.tags ?? [];
-              return (
-                <div className="item reveal" data-dim={lens !== "all" && matched === 0 ? "" : undefined} key={j.company}>
-                  <div className="when">
-                    <span className="range">{formatRange(j)}</span>
-                    <span className="dur" suppressHydrationWarning>
-                      {months} months{j.internship ? " · internship" : ""}
-                    </span>
-                    <span className="bar" style={{ width: `${Math.round((months / LONGEST_ROLE) * 100)}%` }} />
-                  </div>
-                  <div>
-                    <div className="r">
-                      {j.role}
-                      {!j.end && <span className="live"><i />current</span>}
-                    </div>
-                    <div className="co">
-                      {j.company}
-                      {!!j.products && <em> · {j.products} products</em>}
-                    </div>
-                    {!!j.highlights?.length && (() => {
-                      const hs = j.highlights!;
-                      // A bright product subhead over four dimmed bullets reads as a match it
-                      // isn't, so the heading dims with its group. A group runs from one
-                      // highlight carrying `product` to the next one that does.
-                      const groupHit = (start: number) => {
-                        let end = start + 1;
-                        while (end < hs.length && !hs[end].product) end++;
-                        return hs.slice(start, end).some((h) => h.tech?.includes(lens as Lens));
-                      };
-                      return (
-                        <ul className="highlights">
-                          {hs.map((h, i) => {
-                            const hit = lens !== "all" && !!h.tech?.includes(lens as Lens);
-                            return (
-                              <Fragment key={i}>
-                                {h.product && (
-                                  <li className={`prod${lens === "all" || groupHit(i) ? "" : " dim"}`}>
-                                    {h.product}
-                                  </li>
-                                )}
-                                <li className={lens === "all" ? undefined : hit ? "hit" : "dim"}>
-                                  {h.lead && <b>{h.lead}</b>}{h.lead ? " " : ""}{h.text}
-                                </li>
-                              </Fragment>
-                            );
-                          })}
-                        </ul>
-                      );
-                    })()}
-                    {!!j.tags?.length && (
-                      <div className="tags">
-                        {j.tags.map((t) => (
-                          <span
-                            className={`tag${lens === "all" ? "" : lensTags.includes(t) ? " hit" : " dim"}`}
-                            key={t}
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section id="skills" className="pf-section">
-        <div className="pf-wrap">
-          <div className="sec-head reveal"><span className="sec-num">03</span><span className="sec-title">Skills</span><span className="sec-sub">move your cursor over the grid</span></div>
+          <div className="sec-head reveal"><span className="sec-num">02</span><span className="sec-title">Skills</span><span className="sec-sub">move your cursor over the grid</span></div>
           {skillGroups.map((g) => (
             <div className="skillgroup" key={g.label}>
               <div className="sk-label reveal">{g.label}<span className="ct">{g.items.length}</span></div>
