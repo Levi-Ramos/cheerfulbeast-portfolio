@@ -297,6 +297,40 @@ export default function Home() {
     else if (p.responsibilities?.length)
       setLb({ i: 0, title: p.name, desc: p.desc, role: p.role, origin: p.origin, responsibilities: p.responsibilities, tags: p.tags, link: p.link });
   };
+  // Hold a card with a live site for HOLD_MS to open it; the click that follows the release is swallowed.
+  // One pill rides the cursor over any such card, folds into a ring on press, and is driven through classList.
+  const HOLD_MS = 1000;
+  const holdRef = useRef<{ t?: number; fired?: boolean }>({});
+  const hintRef = useRef<HTMLDivElement>(null);
+  const moveHint = (e: React.PointerEvent) => {
+    if (hintRef.current) hintRef.current.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
+  };
+  const startHold = (e: React.PointerEvent<HTMLElement>, link: string) => {
+    if (e.button !== 0) return;
+    const hint = hintRef.current;
+    holdRef.current.fired = false;
+    moveHint(e);
+    hint?.classList.remove("done");
+    hint?.classList.add("holding");
+    holdRef.current.t = window.setTimeout(() => {
+      holdRef.current.fired = true;
+      hint?.classList.replace("holding", "done");
+      window.setTimeout(() => hint?.classList.remove("done"), 700);
+      window.open(link, "_blank", "noopener,noreferrer");
+    }, HOLD_MS);
+  };
+  const endHold = () => {
+    window.clearTimeout(holdRef.current.t);
+    hintRef.current?.classList.remove("holding");
+  };
+  const showHint = (e: React.PointerEvent) => {
+    moveHint(e);
+    hintRef.current?.classList.add("show", "enter");
+  };
+  const hideHint = () => {
+    endHold();
+    hintRef.current?.classList.remove("show");
+  };
   const renderProjectCard = (p: Project, i: number) => {
     const hasModal = !!(p.images?.length || p.terminal || p.responsibilities?.length);
     const showThumbImage = !!p.images?.length;
@@ -358,7 +392,16 @@ export default function Home() {
         key={p.name}
         ref={setRef}
         className={`proj reveal${hasModal ? " clickable" : ""}`}
-        onClick={() => openProject(p)}
+        onClick={() => { if (holdRef.current.fired) { holdRef.current.fired = false; return; } openProject(p); }}
+        {...(p.link ? {
+          "data-hold": "",
+          onPointerEnter: showHint,
+          onPointerMove: moveHint,
+          onPointerDown: (e: React.PointerEvent<HTMLElement>) => startHold(e, p.link!),
+          onPointerUp: endHold,
+          onPointerLeave: hideHint,
+          onPointerCancel: hideHint,
+        } : {})}
         role={hasModal ? "button" : undefined}
         tabIndex={hasModal ? 0 : undefined}
         onKeyDown={(e) => { if (hasModal && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openProject(p); } }}
@@ -1392,6 +1435,13 @@ export default function Home() {
       <canvas id="cursorTrail" ref={cursorTrailRef} aria-hidden="true" />
       <canvas id="starfield" ref={starfieldRef} aria-hidden="true" />
       <div id="scrollnudge" ref={nudgeRef} aria-hidden="true"><i /></div>
+      <div id="holdhint" ref={hintRef} aria-hidden="true" onAnimationEnd={(e) => e.currentTarget.classList.remove("enter")}>
+        <span className="pill">
+          <svg className="ring" viewBox="0 0 44 44"><circle className="track" cx="22" cy="22" r="20" /><circle className="prog" cx="22" cy="22" r="20" /></svg>
+          <svg className="hand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11V5a2 2 0 0 1 4 0v6" /><path d="M13 11V9a2 2 0 0 1 4 0v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-4a2 2 0 0 1 3-2l2 2V8" /></svg>
+          <span className="label">Hold to visit site</span>
+        </span>
+      </div>
       <div className="pagedots">
         {PAGES.map((p) => (
           <button
@@ -1792,7 +1842,7 @@ export default function Home() {
 
       <section id="projects" className="pf-section">
         <div className="pf-wrap">
-          <div className="sec-head reveal"><span className="sec-num">01</span><span className="sec-title">Selected Projects</span><span className="sec-sub">tilt a card</span></div>
+          <div className="sec-head reveal"><span className="sec-num">01</span><span className="sec-title">Selected Projects</span><span className="sec-sub">tilt a card · hold one to visit the site</span></div>
           <div className="projtabs reveal">
             {([["personal", "Personal"], ["work", "Work"]] as const).map(([k, label]) => (
               <button
