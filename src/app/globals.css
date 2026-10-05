@@ -356,9 +356,9 @@ html::-webkit-scrollbar { width:0; height:0; display:none; }
 .lb-info h3 { font-size:20px; font-weight:700; }
 .lb-info p { color:var(--muted); font-size:14px; line-height:1.65; margin-top:14px; flex:1; }
 .lb-info .btn { margin-top:22px; align-self:flex-start; }
-.lb-arrow { position:absolute; top:50%; transform:translateY(-50%); color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.lb-arrow { position:absolute; top:50%; transform:translateY(-50%); color:#fff; background:rgba(10,13,20,.78); border:1px solid rgba(255,255,255,.55); box-shadow:0 2px 10px rgba(0,0,0,.35); backdrop-filter:blur(4px); width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
 .lb-arrow.left { left:24px; } .lb-arrow.right { right:24px; }
-.lb-dots { position:absolute; bottom:20px; left:0; right:0; display:flex; gap:8px; justify-content:center; }
+.lb-dots { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:8px; padding:7px 11px; border-radius:99px; background:rgba(10,13,20,.78); }
 .lb-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.3); }
 .lb-dot.active { background:#fff; }
 @media (max-width:760px) {
