@@ -59,6 +59,7 @@ export const projects: Project[] = [
     glyph: "D2",
     glyphColor: "#f5a623",
     grad: "linear-gradient(135deg,#2a1f0a,#0a0d14)",
+    link: "https://github.com/Levi-Ramos/destiny2-mcp",
     imagesLabel: "View install →",
     terminal: {
       title: "guest@mark-ramos: ~/destiny2-mcp",
@@ -127,6 +128,7 @@ export const projects: Project[] = [
     glyph: "POS",
     glyphColor: "#22d3ee",
     grad: "linear-gradient(135deg,#07231f,#0a0d14)",
+    images: [0, 1, 2, 3, 4, 5].map((i) => `/servpos${i}.jpg`),
     origin: "Existing system — joined mid-build, now in client pilot",
     responsibilities: [
       "Built Flutter features (Bloc) for the BIR-compliant POS flow",
